@@ -6,27 +6,31 @@ import random
 import collections
 import time
 import base64
+import atexit
 
 # List of potential characters for auth ids
 id_characters = string.ascii_letters + string.ascii_uppercase
 
+def flush(database):
+    with open("database.json", "w") as file:
+        json.dump(database,file, indent = 4, sort_keys = True)
+
 def trim_servers():
-    global last_pinged
-    global online_servers
+    global db
 
     current_time = int(time.time())
 
     # We first trim off any servers that haven't pinged in over 10 seconds
     to_delete = []
 
-    for server_id, last_ping in last_pinged.items():
+    for server_id, last_ping in db["last_pinged"].items():
         print(last_ping)
         if current_time - last_ping > 10:
             to_delete.append(server_id)
 
     for server_id in to_delete:
-        del online_servers[server_id]
-        del last_pinged[server_id]
+        del db["online_servers"][server_id]
+        del db["last_pinged"][server_id]
 
 def official_server_authenticate(request):
     # First check if auth id was passed
@@ -42,6 +46,7 @@ def official_server_authenticate(request):
 
     return True
 
+# Create databse if it doesnt exist
 try:
     with open("database.json", "r") as file:
         db = json.load(file)
@@ -49,95 +54,25 @@ try:
 except FileNotFoundError:
     input("CAN NOT FIND DATABASE! Press enter to generate a new one!")
 
-    db = {
-        "account_passwords": {
-            "users"
-        }
-    }
-try:
-    with open("update.json", "r") as file:
-        update = json.load(file)
+    with open("default_db.json", "r") as file:
+        db = json.load(file)
 
-except FileNotFoundError:
-    print("Could not find update")
+    with open("database.json", "w") as file:
+        json.dump(db,file, indent = 4)
 
-    update = {}
+# Generate official server token
+if db["official_server_token"] == None:
+    print("UNABLE TO LOAD OFFICIAL SERVER AUTH TOKEN, GENERATING A NEW ONE")
 
-    with open("update.json", "w") as file:
-        json.dump(update, file)
-
-# Generates or loads account passwords
-try:
-    with open("account_passwords.json", "r") as file:
-        account_passwords = json.load(file)
-
-except FileNotFoundError:
-    print("COULD NOT FIND ACCOUNT PASSSWORDS, GENERATING A NEW FILE")
-
-    account_passwords = {}
-
-    with open("account_passwords.json", "w") as file:
-        json.dump(account_passwords, file)
-
-
-
-# Generates or loads auth id
-try:
-    with open("official_server_auth_id.txt", "r") as file:
-        official_server_auth_id = file.read()
-
-except FileNotFoundError:
-    print("UNABLE TO LOAD OFFICIAL SERVER AUTH ID, GENERATING A NEW ONE")
-
-    official_server_auth_id = ""
+    official_server_auth_token = ""
 
     for i in range(31):
-        official_server_auth_id += random.choice(id_characters)
+        official_server_auth_token += random.choice(id_characters)
 
-    with open("official_server_auth_id.txt", "w") as file:
-        file.write(official_server_auth_id)
-
-
-# Loads existing user data
-try:
-    with open("user_data.json", "r") as file:
-        user_data = json.load(file)
-except FileNotFoundError:
-    user_data = {
-        "sample_user": {
-            "elo": "123",
-            "banned": False,
-            "agreed_toc": True,
-            "over_13": True
-        }
-    }
-
-    with open("user_data.json", "w") as file:
-        json.dump(user_data, file)
-
-# Loads servers auth ids
-try:
-    with open("server_auths.json", "r") as file:
-        server_auths = json.load(file)
-
-except FileNotFoundError:
-    server_auths = {}
-
-    with open("server_auths.json", "w") as file:
-        json.dump(server_auths,file)
-
-# Records the last time a server updated their info (meaning they are online)
-last_pinged = {}
-
-# List of all online servers
-online_servers = {}
-
-# Dict of users and their temp tokens
-temp_account_tokens = {}
+    db["official_server_token"] = official_server_auth_token
 
 app = Flask(__name__)
 api = Api(app)
-
 
 class GenerateToken(Resource):
 
@@ -156,7 +91,7 @@ class GenerateToken(Resource):
         global db
 
         if request.json == None:
-            response = make_response(jsonify("no username/password supplied"), 400)
+            response = make_response("no username/password supplied", 400)
 
             response.headers["Response-Type"] = "generate_token"
 
@@ -168,21 +103,17 @@ class GenerateToken(Resource):
         password = request.json["password"]
 
         if username not in db["account_passwords"]:
-            with open("account_passwords.json", "r") as file:
-                account_passwords = json.load(file)
 
-            # Check if the server is in the dict now
-            if username not in account_passwords:
-                response = make_response(jsonify("account does not exist"), 404)
+            response = make_response("account does not exist", 404)
 
-                response.headers["Response-Type"] = "generate_token"
+            response.headers["Response-Type"] = "generate_token"
 
-                return response
+            return response
 
         actual_password = account_passwords[username]
 
         if password != actual_password:
-            response = make_response(jsonify("invalid password"), 401)
+            response = make_response("invalid password", 401)
 
             response.headers["Response-Type"] = "generate_token"
 
@@ -212,7 +143,7 @@ class GenerateToken(Resource):
         print(temp_account_tokens)
 
         # Constructs response
-        response = make_response(jsonify(temp_token), 200)
+        response = make_response(temp_token, 200)
 
         response.headers["Response-Type"] = "generate_token"
 
@@ -221,151 +152,177 @@ class GenerateToken(Resource):
         return response
 
 class ValidateToken(Resource):
-    global temp_account_tokens
+    global db
 
     def get(self, account_token):
 
         print(temp_account_tokens)
 
         try:
-            validated_account_id = temp_account_tokens[account_token]
+            validated_account_id = db["temp_account_tokens"][account_token]
 
         except KeyError:
-            #raise
-            return "no account linked to token", 404
+            response = make_response("no account linked to token", 200)
+            response.headers["Response-Type"] = "validate_token"
+
+            return response
 
         # No longer valid
-        del temp_account_tokens[account_token]
+        del db["temp_account_tokens"][account_token]
 
-        return validated_account_id, 200
+        response = make_response(validated_account_id, 200)
+        response.headers["Response-Type"] = "validate_token"
 
-class User(Resource):
+        return response
 
-    def get(self, user_name):
+class UserInfo(Resource):
+
+    def get(self, user_id):
+        global db
 
         # If we can find the user, we return the data
-        if user_name in user_data:
-            # Constructs response
-            response = make_response(jsonify(user_data[user_name]), 200)
+        try:
+            user_info = db["user_info"][user_id]
+
+            response = make_response(jsonify(user_info), 200)
+            response.headers["Response-Type"] = "get_user_info"
+
+            return response
+
+        except KeyError:
+            # Otherwise, we return 404
+            response = make_response("no user with that id", 404)
 
             response.headers["Response-Type"] = "get_user_info"
 
             return response
 
-        # Otherwise, we return 404
-        else:
-            response = make_response(jsonify("no user"), 404)
-
-            response.headers["Response-Type"] = "generate_token"
-
-            return response
-
     # Update user info, only official servers can do this
-    def put(self, user_name):
+    def put(self, user_id):
+        global db
 
-        # Authenticates request
-        auth_result = official_server_authenticate(request)
+        request_token = request.headers["auth_token"]
 
-        if auth_result != True: # If it doesn't pass authentication, we return an "unauthorized" response
-            response = make_response(jsonify(auth_result), 400)
+        if request_token != db["official_server_token"]:
 
+            response = make_response("requires valid official token", 401)
             response.headers["Response-Type"] = "update_user_info"
 
             return response
 
-        user_data[user_name].update(request.json)
+        if user_name not in db["user_info"]:
+            db["user_info"][user_name] = request.json
 
-        # Saves new data to file
-        with open("data.json", "w") as file:
-            json.dump(user_data, file, indent = 4, sort_keys= True)
+        else:
+            user_data[user_name].update(request.json)
 
-        response = make_response(jsonify("success"), 400)
-
+        response = make_response("success", 201)
         response.headers["Response-Type"] = "update_user_info"
-        return "success", 201
+
+        return response
 
 class ServerList(Resource):
 
     def get(self):
 
-        trim_servers(servers)
+        global db
 
-        return online_servers
+        trim_servers()
+
+        print(db["online_servers"])
+
+        response = make_response(db["online_servers"], 200)
+        response.headers["Response-Type"] = "get_server_list"
+
+        return response
 
 class Server(Resource):
     def get(self, server_id):
 
+        global db
+
         trim_servers()
 
-        if server_id not in online_servers:
-            return "server not online", 404
+        try:
+            server = db["online_servers"][server_id]
 
-        return online_servers[server_id]
+            response = make_response(jsonify(server), 200)
+            response.headers["Response-Type"] = "get_server"
+
+            return response
+
+        except KeyError:
+            response = make_response("server not online", 404)
+            response.headers["Response-Type"] = "get_server"
+
+            return response
 
     def put(self,server_id):
 
-        global server_auths
+        global db
 
         if request.json == None:
-            return "no server data provided", 400
+            response = make_response("no server data provided", 400)
+            response.headers["Response-Type"] = "update_server"
+
+            return response
 
         print(request.headers)
 
-        if "auth_id" not in request.headers:
-            return "no auth_id provided", 400
+        if "auth_token" not in request.headers:
+            response = make_response("no auth token provided", 400)
+            response.headers["Response-Type"] = "update_server"
 
-        # If we cant find the server in the id's dict, we reload the id file
-        if server_id not in server_auths:
-            with open("server_auths.json", "r") as file:
-                server_auths = json.load(file)
+            return response
 
-            # Check if the server is in the dict now
-            if server_id not in server_auths:
-                return "server not in auth database", 404
+        # Check if the server is in the dict now
+        if server_id not in db["server_tokens"]:
 
-        if request.headers["auth_id"] != server_auths[server_id]:
-            return "invalid server auth id", 401
+            response = make_response("no such server", 404)
+            response.headers["Response-Type"] = "update_server"
+
+            return response
+
+        if request.headers["auth_token"] != db["server_tokens"][server_id]:
+
+            response = make_response("invalid server auth token", 401)
+            response.headers["Response-Type"] = "update_server"
+
+            return response
 
         # Updates server status
-        if server_id not in online_servers:
-            online_servers[server_id] = request.json
+        if server_id not in db["online_servers"]:
+            db["online_servers"][server_id] = request.json
 
         else:
-            online_servers[server_id].update(request.json)
+            db["online_servers"][server_id].update(request.json)
 
-        last_pinged[server_id] = int(time.time())
+        db["last_pinged"][server_id] = int(time.time())
 
-        print(online_servers)
+        print(db["online_servers"])
 
-        return "success", 201
+        response = make_response("success", 200)
+        response.headers["Response-Type"] = "update_server"
 
+# class UserPets:
+#     def
 class Update(Resource):
     def get(self, update_id):
 
-        return update
+        return db["update"]
 
 
     def put(self, update_id):
 
-        global update
-
-        update = request.json
-
-        with open("update.json", "w") as file:
-            json.dump(update, file, indent = 4)
+        db["update"] = request.json
 
         return "successful", 201
-
-
-
-# class UpdateList(Resource):
-#     get ():
 
 # @app.errorhandler(404)
 # def page_not_found(e):
 #     return render_template('404.html'), 404
 
-api.add_resource(User,"/users/<string:user_name>")
+api.add_resource(UserInfo,"/users/<string:user_name>")
 api.add_resource(ServerList, "/servers")
 api.add_resource(Server, "/servers/<string:server_id>")
 api.add_resource(GenerateToken, "/generate_token")
@@ -373,6 +330,9 @@ api.add_resource(ValidateToken, "/validate_token/<string:account_token>")
 api.add_resource(Update, "/updates/<string:update_id>")
 
 if __name__ == "__main__":
+
+    atexit.register(flush, db)
+
     app.run(host = "192.168.0.100", port = 80, debug = False)
 
     # from waitress import serve
