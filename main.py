@@ -19,6 +19,7 @@ from flask_restful import Api, Resource
 import stripe
 import wget
 import requests
+import secrets
 
 stripe.api_key = "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"
 #stripe.api_key = "sk_test_51GGUk8DOZQ3m5pr7sgD0Vh7MzvNm5Q97BQGDB6Ur1Ge9fUeWmcCUUtNGxDrtX8AgMqyFyCc0BgyiSdFJszcnjJMc00VpfbnNTq"
@@ -151,14 +152,6 @@ def reload_db():
         with open("database.json","r") as file:
             db = json.load(file)
 
-def generate_token(length):
-    token = ""
-
-    for i in range(length):
-        token += random.choice(id_characters)
-
-    return token
-
 def flush(database):
     with open("database.json", "w") as file:
         json.dump(database,file, indent = 4, sort_keys = True)
@@ -181,17 +174,17 @@ def trim_servers():
 
 class Wallpaper(Resource):
     def get(self):
-    
+
         wallpapers = os.listdir("resources/wallpapers")
-        
+
         wallpaper_choice = random.choice(wallpapers)
-        
+
         response = flask.send_file(f"resources/wallpapers/{wallpaper_choice}", mimetype='image/jpeg', as_attachment = True)
-        
+
         response.headers["Response-Type"] = "wallpaper"
-        
+
         return response
-        
+
 class ResourcePack(Resource):
     def get(self):
         return flask.send_file("resources/downloads/paintingpack.zip", as_attachment=True)
@@ -252,9 +245,6 @@ class GenerateToken(Resource):
         attempt_password_hashed = hashlib.sha256(attempt_password.encode("utf-8") + salt.encode("utf-8")).hexdigest()
         actual_password_hashed = db["account_credentials"][username]["hashed_password"]
 
-        print(attempt_password_hashed)
-        print(actual_password_hashed)
-
         if attempt_password_hashed != actual_password_hashed:
             response = make_response("invalid password", 401)
 
@@ -265,9 +255,9 @@ class GenerateToken(Resource):
             return response
 
         # If the username and password are correct, we return and store a temp token
-        temp_token = generate_token(31)
+        temp_token = secrets.token_urlsafe()
 
-        # Remove all other bindings
+        # Remove all other tokens belonging to this user
         to_be_deleted = []
 
         for token, user in db["temp_account_tokens"].items():
@@ -514,6 +504,27 @@ class PetSelect(Resource): # Allows a user to change their selected pet
 
         return response
 
+class ResetPassword(Resource):
+    def post(self):
+
+        email = request.json["email"]
+
+        # if the email exists within the database
+        exists = False
+
+        for user in db["account_credentials"].values():
+
+            if email == user["email"]:
+                # if there is an account with this email
+                exists = True
+
+        if not exists:
+            # we dont tell the user if the email exists within the database
+            return make_response("sent reset email if account exists", 200)
+
+        # create reset token
+
+
 class UpdateInfo(Resource):
     def get(self):
         return db["update_id"]
@@ -617,7 +628,7 @@ class RegisterUser(Resource):
                 return response
 
         # Generate salt
-        salt = generate_token(31)
+        salt = secrets.token_urlsafe()
 
         # Hash password
         hashed_password = hashlib.sha256(password.encode("utf-8") + salt.encode("utf-8")).hexdigest()
@@ -711,7 +722,7 @@ class RegisterServer(Resource):
 
                     return response
 
-        server_token = generate_token(31)
+        server_token = secrets.token_urlsafe()
 
         db["server_tokens"][server_id] = {"server_token": server_token, "discord_id": discord_id}
 
@@ -887,7 +898,7 @@ if __name__ == "__main__":
     if db["official_server_token"] == None:
         print("UNABLE TO LOAD OFFICIAL SERVER AUTH TOKEN, GENERATING A NEW ONE")
 
-        db["official_server_token"] = generate_token(31)
+        db["official_server_token"] = secrets.token_urlsafe()
 
     try:
         with open("resources/bad_words.json", "r") as file:
