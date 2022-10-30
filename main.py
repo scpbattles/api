@@ -252,9 +252,11 @@ class GenerateToken(Resource):
 
             return response
 
+        temp_token = secrets.token_urlsafe()
+
         # tokens expire after 30 minutes
         db["temp_account_tokens"][username] = {
-            "token": secrets.token_urlsafe(),
+            "token": temp_token,
             "expiration": time.time() + 1800
         }
 
@@ -273,9 +275,20 @@ class ValidateToken(Resource):
 
         for user, token_data in db["temp_account_tokens"].items():
             if token_data["token"] == account_token:
+
+                # get the user that this token is bound to
                 bound_user = user
 
+                # if the token is expired
+                is_expired = token_data["expiration"] < time.time()
+
         if bound_user is None:
+            response = make_response("no account linked to token", 404)
+            response.headers["Response-Type"] = "validate_token"
+
+            return response
+
+        if is_expired:
             response = make_response("no account linked to token", 404)
             response.headers["Response-Type"] = "validate_token"
 
