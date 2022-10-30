@@ -250,33 +250,17 @@ class GenerateToken(Resource):
 
             response.headers["Response-Type"] = "generate_token"
 
-            print("INVALID PASSWORD")
-
             return response
 
-        # If the username and password are correct, we return and store a temp token
-        temp_token = secrets.token_urlsafe()
+        # tokens expire after 30 minutes
+        db["temp_account_tokens"][username] = {
+            "token": secrets.token_urlsafe(),
+            "expiration": time.time() + 1800
+        }
 
-        # Remove all other tokens belonging to this user
-        to_be_deleted = []
-
-        for token, user in db["temp_account_tokens"].items():
-            if user == username:
-                to_be_deleted.append(token)
-
-        for token in to_be_deleted:
-            del db["temp_account_tokens"][token]
-
-        # Eventually we will want these to expire
-        db["temp_account_tokens"][temp_token] = username
-
-        # Constructs response
+        # send the token to the user
         response = make_response(temp_token, 200)
-
         response.headers["Response-Type"] = "generate_token"
-
-        print("SUCCESS")
-
         return response
 
 class ValidateToken(Resource):
@@ -284,19 +268,20 @@ class ValidateToken(Resource):
 
     def get(self, account_token):
 
-        try:
-            validated_account_id = db["temp_account_tokens"][account_token].lower()
+        # the user that this token is bound to
+        bound_user = None
 
-        except KeyError:
+        for user, token_data in db["temp_account_tokens"].items():
+            if token_data["token"] == account_token:
+                bound_user = user
+
+        if bound_user is None:
             response = make_response("no account linked to token", 404)
             response.headers["Response-Type"] = "validate_token"
 
             return response
 
-        # No longer valid
-        del db["temp_account_tokens"][account_token]
-
-        response = make_response({"validated_token": account_token, "validated_user_id": validated_account_id}, 200)
+        response = make_response({"validated_token": account_token, "validated_user_id": bound_user}, 200)
         response.headers["Response-Type"] = "validate_token"
 
         return response
