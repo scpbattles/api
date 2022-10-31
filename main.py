@@ -17,7 +17,6 @@ import flask
 from flask import Flask, request, jsonify, make_response, render_template
 from flask_restful import Api, Resource
 import stripe
-import wget
 import requests
 import secrets
 
@@ -26,6 +25,8 @@ stripe.api_key = "sk_live_51GGUk8DOZQ3m5pr7fuJwTH2BgSZPivIiYRDvFnhaFE7dkFkXZKVYJ
 #import PySimpleGUIWx as gui
 
 geolocate_api_key = "b9df876be2834c1887e086d3d5fd8730"
+
+smtp_api_key = "api-D11707DC552611ED92F1F23C91C88F4E"
 
 # email
 # default pet
@@ -91,41 +92,41 @@ def fufill_orders():
 
         time.sleep(10)
 # Generates initial layout
-def generate_layout(data_form):
-    layout = []
-
-    if type(data_form) == dict:
-
-        for key, value in data_form.items():
-            row = []
-
-            # Add key
-            row.append(gui.Text(f"{key}: ", key = key))
-
-            # If the value contains a dictionary, we will have a seperate menu for that dict
-            # Different types of values will get different GUI elements for manipulating them
-            if type(value) is dict:
-                row.append(gui.Button("Dict", key = f"-EDIT-{key}"))
-            elif type(value) is list:
-                row.append(gui.Button("List", key = f"-EDIT-{key}"))
-            elif type(value) is bool:
-                row.append(gui.Checkbox("", default=value, key = f"-UPDATE-{key}"))
-            elif type(value) is str or int: # Actual modifiable values
-                row.append(gui.Input(value, do_not_clear = True, key = f"-UPDATE-{key}"))
-
-            layout.append(row)
-
-    elif type(data_form) == list:
-
-        print("Data form is list!")
-        for index, value in enumerate(data_form):
-
-            layout.append([gui.Text(f"{index}: "), gui.Input(default = value, do_not_clear = True, key = f"-UPDATE-{index}")])
-
-
-    layout.append([gui.Button("Submit", key = "-SUBMIT-"), gui.Stretch(), gui.Button("Home", key = "-HOME-")])
-
-    return layout
+# def generate_layout(data_form):
+#     layout = []
+#
+#     if type(data_form) == dict:
+#
+#         for key, value in data_form.items():
+#             row = []
+#
+#             # Add key
+#             row.append(gui.Text(f"{key}: ", key = key))
+#
+#             # If the value contains a dictionary, we will have a seperate menu for that dict
+#             # Different types of values will get different GUI elements for manipulating them
+#             if type(value) is dict:
+#                 row.append(gui.Button("Dict", key = f"-EDIT-{key}"))
+#             elif type(value) is list:
+#                 row.append(gui.Button("List", key = f"-EDIT-{key}"))
+#             elif type(value) is bool:
+#                 row.append(gui.Checkbox("", default=value, key = f"-UPDATE-{key}"))
+#             elif type(value) is str or int: # Actual modifiable values
+#                 row.append(gui.Input(value, do_not_clear = True, key = f"-UPDATE-{key}"))
+#
+#             layout.append(row)
+#
+#     elif type(data_form) == list:
+#
+#         print("Data form is list!")
+#         for index, value in enumerate(data_form):
+#
+#             layout.append([gui.Text(f"{index}: "), gui.Input(default = value, do_not_clear = True, key = f"-UPDATE-{index}")])
+#
+#
+#     layout.append([gui.Button("Submit", key = "-SUBMIT-"), gui.Stretch(), gui.Button("Home", key = "-HOME-")])
+#
+    # return layout
 
 # Takes updated data from DB (data_form) and updates the GUI
 def update_layout(window, data_form):
@@ -507,75 +508,91 @@ class ResetPassword(Resource):
 
         email = request.json["email"]
 
-        # if the email exists within the database
-        exists = False
+        # the user id that is associated with this email
+        user = None
 
         for user in db["account_credentials"].values():
 
             if email == user["email"]:
-                # if there is an account with this email
-                exists = True
 
-        if not exists:
+                # if there is an account with this email
+                user = user
+
+        if not user: # if we did not find a user
+
             # we dont tell the user if the email exists within the database
             return make_response("sent reset email if account exists", 200)
 
-        # create reset token
+        reset_token = secrets.token_urlsafe()
+
+        # attach a reset token to the associated user id
+        db["reset_tokens"][user] = reset_token
+
+        email = {
+            "api_key": smtp_api_key,
+            'to': [f"SCP Battles Player <{email}>"],
+            "sender": f"SCP Battles Support <help@voxany.net>",
+            "subject": "Reset your password",
+            "text_body": "Follow the link to reset your password",
+            "html_body"
+        }
+
+
 
 
 class UpdateInfo(Resource):
     def get(self):
         return db["update_id"]
 
-class Update(Resource):
-    def get(self):
-
-        return flask.send_file("update/update.zip", as_attachment=True)
-
-    def put(self):
-        global db
-
-        print(request.json)
-
-        try:
-            auth_token = request.headers["auth_token"]
-        except:
-            response = make_response("did not send auth token", 400)
-
-            response.headers["Response-Type"] = "send_update"
-
-            return response
-
-        if auth_token != db["official_server_token"]:
-            response = make_response("invalid auth token", 401)
-
-            response.headers["Response-Type"] = "send_update"
-
-            return response
-
-        try:
-            update_link = request.json["discord_url"]
-            print(update_link)
-
-        except KeyError:
-            make_response("could not find discord url", 400)
-
-            response.headers["Response-Type"] = "send_update"
-
-            return response
-
-        response = requests.get(update_link)
-
-        open("update/update.zip", 'wb').write(response.content)
-
-        # Updates update ID
-        db["update_id"] += 1
-
-        response = make_response("success", 201)
-
-        response.headers["Response-Type"] = "send_update"
-
-        return response
+# class Update(Resource):
+#     def get(self):
+#
+#         return flask.send_file("update/update.zip", as_attachment=True)
+#
+#     def put(self):
+#         global db
+#
+#         print(request.json)
+#
+#         try:
+#             auth_token = request.headers["auth_token"]
+#         except:
+#             response = make_response("did not send auth token", 400)
+#
+#             response.headers["Response-Type"] = "send_update"
+#
+#             return response
+#
+#         if auth_token != db["official_server_token"]:
+#             response = make_response("invalid auth token", 401)
+#
+#             response.headers["Response-Type"] = "send_update"
+#
+#             return response
+#
+#         try:
+#             update_link = request.json["discord_url"]
+#             print(update_link)
+#
+#         except KeyError:
+#             make_response("could not find discord url", 400)
+#
+#             response.headers["Response-Type"] = "send_update"
+#
+#             return response
+#
+#         response = requests.get(update_link)
+#
+#         open("update/update.zip", 'wb').write(response.content)
+#
+#         # Updates update ID
+#         db["update_id"] += 1
+#
+#         response = make_response("success", 201)
+#
+#         response.headers["Response-Type"] = "send_update"
+#
+#         return response
 
 class RegisterUser(Resource):
     def put(self):
@@ -890,7 +907,7 @@ if __name__ == "__main__":
             db = json.load(file)
 
         with open("database.json", "w") as file:
-            json.dump(db,file, indent = 4)
+            json.dump(db, file, indent=4)
 
     # Generate official server token
     if db["official_server_token"] == None:
@@ -913,7 +930,7 @@ if __name__ == "__main__":
     api.add_resource(GenerateToken, "/generate_token")
     api.add_resource(ValidateToken, "/validate_token/<string:account_token>")
     api.add_resource(UpdateInfo, "/updateid")
-    api.add_resource(Update, "/update")
+    #api.add_resource(Update, "/update")
     api.add_resource(PetSelect, "/selectpet/<string:user_id>")
     api.add_resource(RegisterUser,"/register")
     api.add_resource(RegisterServer, "/register_server/<string:server_id>")
@@ -995,7 +1012,7 @@ if __name__ == "__main__":
     context = ssl.SSLContext()
     context.load_cert_chain('certs/fullchain.pem', 'certs/privkey.pem')
 
-    app.run(host = socket.gethostname(), port = 443, ssl_context = context, debug = False)
+    app.run(host=socket.gethostname(), port=443, ssl_context=context, debug=False)
 
     #app.run(host = "192.168.0.102", port = 443, debug = False)
 
