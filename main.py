@@ -528,6 +528,7 @@ class ResetPassword(Resource):
         # attach a reset token to the associated user id
         db["reset_tokens"][user] = reset_token
 
+        email_html = 
         email = {
             "api_key": smtp_api_key,
             'to': [f"SCP Battles Player <{email}>"],
