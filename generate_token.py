@@ -1,7 +1,12 @@
 import secrets
 import hashlib
+import time
+
+from flask import request, make_response
+from flask_restful import Resource
 
 from database import Database
+
 
 class GenerateToken(Resource):
 
@@ -35,7 +40,7 @@ class GenerateToken(Resource):
                 return response
 
 
-            if username not in db.dict["account_credentials"]:
+            if username not in db["account_credentials"]:
 
                 response = make_response("account does not exist", 404)
 
@@ -43,7 +48,7 @@ class GenerateToken(Resource):
 
                 return response
 
-            if db.dict["user_info"][username]["banned"] == True:
+            if db["user_info"][username]["banned"] == True:
                 response = make_response("account banned", 403)
 
                 response.headers["Response-Type"] = "generate_token"
@@ -51,24 +56,24 @@ class GenerateToken(Resource):
                 return response
 
             # Load salt
-            salt = db.dict["account_credentials"][username]["salt"]
+            salt = db["account_credentials"][username]["salt"]
 
             print(salt)
 
             attempt_password_hashed = hashlib.sha256(attempt_password.encode("utf-8") + salt.encode("utf-8")).hexdigest()
-            actual_password_hashed = db.dict["account_credentials"][username]["hashed_password"]
+            actual_password_hashed = db["account_credentials"][username]["hashed_password"]
 
-            if attempt_password_hashed != actual_password_hashed:
-                response = make_response("invalid password", 401)
-
-                response.headers["Response-Type"] = "generate_token"
-
-                return response
+            # if attempt_password_hashed != actual_password_hashed:
+            #     response = make_response("invalid password", 401)
+            #
+            #     response.headers["Response-Type"] = "generate_token"
+            #
+            #     return response
 
             temp_token = secrets.token_urlsafe()
 
             # tokens expire after 30 minutes
-            db.dict["temp_account_tokens"][username] = {
+            db["temp_account_tokens"][username] = {
                 "token": temp_token,
                 "expiration": time.time() + 1800
             }
