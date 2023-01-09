@@ -82,3 +82,4 @@ class GenerateToken(Resource):
             response = make_response(temp_token, 200)
             response.headers["Response-Type"] = "generate_token"
             return response
+        
