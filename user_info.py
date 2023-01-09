@@ -1,3 +1,9 @@
+from flask import make_response, jsonify, request
+from flask_restful import Resource
+
+from database import Database
+
+
 class UserInfo(Resource):
 
     def get(self, user_id):
@@ -8,7 +14,7 @@ class UserInfo(Resource):
 
             # If we can find the user, we return the data
             try:
-                user_info = db.dict["user_info"][user_id]
+                user_info = db["user_info"][user_id]
 
                 response = make_response(jsonify(user_info), 200)
                 response.headers["Response-Type"] = "get_user_info"
@@ -38,14 +44,14 @@ class UserInfo(Resource):
 
                 return response
 
-            if request_token != db.dict["official_server_token"]:
+            if request_token != db["official_server_token"]:
 
                 response = make_response("requires valid official token", 401)
                 response.headers["Response-Type"] = "update_user_info"
 
                 return response
 
-            db.dict["user_info"][user_id].update(request.json)
+            db["user_info"][user_id].update(request.json)
 
             response = make_response("success", 201)
             response.headers["Response-Type"] = "update_user_info"

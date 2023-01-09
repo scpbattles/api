@@ -1,3 +1,9 @@
+import secrets
+import json
+
+from flask import request, make_response
+from flask_restful import Resource
+
 from database import Database
 
 class RegisterServer(Resource):
@@ -5,9 +11,12 @@ class RegisterServer(Resource):
 
         with Database() as db:
 
+            with open("/etc/scpbattlesapi/bad_words.json", "r") as file:
+                bad_words = json.load(file)
+
             server_id = server_id.lower()
 
-            # Look for official auth token
+            # look for official auth token
             try:
                 auth_token = request.headers["auth_token"]
 
@@ -28,14 +37,14 @@ class RegisterServer(Resource):
                 return response
 
             # Ensure official server token matches
-            if auth_token != db.dict["official_server_token"]:
+            if auth_token != db["official_server_token"]:
                 response = make_response("invalid token", 401)
                 response.headers["Response-Type"] = "register_server"
 
                 return response
 
             # Check if that server id is taken
-            if server_id in db.dict["server_tokens"]:
+            if server_id in db["server_tokens"]:
                 response = make_response("server with that id already exists", 403)
                 response.headers["Response-Type"] = "register_server"
 
@@ -59,7 +68,7 @@ class RegisterServer(Resource):
 
             server_token = secrets.token_urlsafe()
 
-            db.dict["server_tokens"][server_id] = {"server_token": server_token, "discord_id": discord_id}
+            db["server_tokens"][server_id] = {"server_token": server_token, "discord_id": discord_id}
 
             response = make_response(server_token, 201)
 
@@ -82,7 +91,7 @@ class RegisterServer(Resource):
 
                 return response
 
-            if server_id not in db.dict["server_tokens"]:
+            if server_id not in db["server_tokens"]:
                 response = make_response("no such server", 404)
 
                 response.headers["Response-Type"] = "delete_server"
@@ -90,7 +99,7 @@ class RegisterServer(Resource):
                 return response
 
 
-            if discord_id != db.dict["server_tokens"][server_id]["discord_id"]:
+            if discord_id != db["server_tokens"][server_id]["discord_id"]:
                 response = make_response("invalid discord id", 401)
 
                 response.headers["Response-Type"] = "delete_server"
@@ -98,7 +107,7 @@ class RegisterServer(Resource):
                 return response
 
 
-            del db.dict["server_tokens"][server_id]
+            del db["server_tokens"][server_id]
 
             response = make_response("server deleted", 201)
 

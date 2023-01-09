@@ -1,3 +1,7 @@
+from flask import make_response
+from flask_restful import Resource
+
+
 class LandingPage(Resource):
     def get(self):
 

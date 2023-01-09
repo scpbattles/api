@@ -1,8 +1,9 @@
 import json
 
+
 class Database:
 
-    def __init__(self, db_path="database.json"):
+    def __init__(self, db_path="/var/local/scpbattlesapi/database.json"):
 
         self.db_path=db_path
         self.dict=None
@@ -15,9 +16,11 @@ class Database:
         
         self.dict = db_dict
 
-    def __exit__(self):
+        return self.dict
+
+    def __exit__(self, exception_type, exception_value, traceback):
 
         # save the database upon exiting context
         with open(self.db_path, "w") as file:
-            json.dump(self.dict)
+            json.dump(self.dict, file)
             

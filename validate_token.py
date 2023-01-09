@@ -1,3 +1,11 @@
+import time
+
+from flask import make_response
+from flask_restful import Resource
+
+from database import Database
+
+
 class ValidateToken(Resource):
 
     def get(self, account_token):
@@ -6,7 +14,7 @@ class ValidateToken(Resource):
             # the user that this token is bound to
             bound_user = None
 
-            for user, token_data in db.dict["temp_account_tokens"].items():
+            for user, token_data in db["temp_account_tokens"].items():
                 if token_data["token"] == account_token:
 
                     # get the user that this token is bound to
