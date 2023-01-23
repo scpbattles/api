@@ -60,6 +60,10 @@ class Server(Resource):
                 response = make_response("no auth token provided", 400)
                 response.headers["Response-Type"] = "update_server"
 
+                print(request.headers)
+
+                print(list(request.headers))
+                
                 return response
 
             try:

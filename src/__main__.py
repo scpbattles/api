@@ -23,7 +23,7 @@ if __name__ == "__main__":
     app = Flask(__name__)
     api = Api(app)
 
-    api.add_resource(UserInfo, "/users/<string:user_id>")
+    api.add_resource(UserInfo, "/users/<string:steamid>")
     api.add_resource(ServerList, "/servers")
     api.add_resource(Server, "/servers/<string:server_id>")
     api.add_resource(GenerateToken, "/generate_token")
