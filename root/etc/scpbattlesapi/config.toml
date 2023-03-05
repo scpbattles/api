@@ -5,3 +5,7 @@ default_items = [
 ]
 
 steam_api_key = "steam_api_key"
+
+# key_def_id = ["valid", "case", "def", "ids"]
+[key_case_map]
+52 = [51]

@@ -4,7 +4,7 @@ import json
 from flask import request, make_response
 from flask_restful import Resource
 
-from database import Database
+from scpbattlesapi.database import Database
 
 class RegisterServer(Resource):
     def put(self, server_id):
