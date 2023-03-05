@@ -10,7 +10,8 @@ def consume_item(item_id, steam_id, steam_api_key):
         "key": steam_api_key,
         "appid": 2173020,
         "itemid": item_id,
-        "steamid": steam_id
+        "steamid": steam_id,
+        "quantity": "1"
     }
 
     response = requests.post("https://partner.steam-api.com/IInventoryService/ConsumeItem/v1/", params=parameters, headers=headers)

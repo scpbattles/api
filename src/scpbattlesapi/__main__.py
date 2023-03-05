@@ -1,22 +1,16 @@
-import json
-import sys
-import ssl
-import socket
-import os
-
 from flask import Flask, request, jsonify, make_response, render_template
 from flask_restful import Api, Resource
 
-from scpbattlesapi.address import Address
-from scpbattlesapi.generate_token import GenerateToken
-from scpbattlesapi.landing import LandingPage
-from scpbattlesapi.register_server import RegisterServer
-from scpbattlesapi.server_list import ServerList
-from scpbattlesapi.server import Server
-from scpbattlesapi.tos import TOS
-from scpbattlesapi.user_info import UserInfo
-from scpbattlesapi.validate_token import ValidateToken
-from scpbattlesapi.wallpaper import Wallpaper
+from view_funcs.address import Address
+from view_funcs.generate_token import GenerateToken
+from view_funcs.landing import LandingPage
+from view_funcs.register_server import RegisterServer
+from view_funcs.server_list import ServerList
+from view_funcs.server import Server
+from view_funcs.tos import TOS
+from view_funcs.user_info import UserInfo
+from view_funcs.validate_token import ValidateToken
+from view_funcs.wallpaper import Wallpaper
 
 if __name__ == "__main__":
 

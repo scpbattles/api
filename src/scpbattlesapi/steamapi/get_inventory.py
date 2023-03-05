@@ -14,6 +14,8 @@ def get_inventory(steam_id, steam_api_key):
 
     response = requests.get("https://partner.steam-api.com/IInventoryService/GetInventory/v1/", params=parameters, headers=headers)
 
+    response.raise_for_status()
+    
     inventory = response.json()["response"]["item_json"]
 
     return inventory

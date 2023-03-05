@@ -3,7 +3,7 @@ import time
 from flask import make_response
 from flask_restful import Resource
 
-from scpbattlesapi.database import Database
+from database import Database
 
 
 class ValidateToken(Resource):
