@@ -1,16 +1,17 @@
 from flask import Flask, request, jsonify, make_response, render_template
 from flask_restful import Api, Resource
 
-from view_funcs.address import Address
-from view_funcs.generate_token import GenerateToken
-from view_funcs.landing import LandingPage
-from view_funcs.register_server import RegisterServer
-from view_funcs.server_list import ServerList
-from view_funcs.server import Server
-from view_funcs.tos import TOS
-from view_funcs.user_info import UserInfo
-from view_funcs.validate_token import ValidateToken
-from view_funcs.wallpaper import Wallpaper
+from views import Address
+from views import GenerateToken
+from views import LandingPage
+from views import RegisterServer
+from views import ServerList
+from views import Server
+from views import TOS
+from views import UserInfo
+from views import ValidateToken
+from views import Wallpaper
+from views import Case
 
 if __name__ == "__main__":
 
@@ -27,5 +28,6 @@ if __name__ == "__main__":
     api.add_resource(TOS, "/tos")
     api.add_resource(LandingPage, "/")
     api.add_resource(Wallpaper, "/wallpaper.jpg")
+    api.add_resource(Case, "/case")
 
     app.run(host="127.0.0.1", port=5000, debug=False)

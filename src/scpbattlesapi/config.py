@@ -1,9 +1,9 @@
-import tomlkit
+import yaml
 
 
 class Config:
 
-    def __init__(self, config_path="/var/local/scpbattlesapi/database.json"):
+    def __init__(self, config_path="/etc/scpbattlesapi/config.yaml"):
 
         self.config_path=config_path
         self.dict=None
@@ -12,7 +12,7 @@ class Config:
 
         # load database upon entering context
         with open(self.config_path, "r") as file:
-            db_dict = tomlkit.load(file)
+            db_dict = yaml.safe_load(file)
         
         self.dict = db_dict
 
