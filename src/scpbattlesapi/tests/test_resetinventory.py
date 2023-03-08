@@ -1,4 +1,4 @@
-from models import User, Case, SteamAPI, Item, Key 
+from scpbattlesapi.models import User, Case, SteamAPI, Item, Key 
 
 steam_api = SteamAPI(
     api_key="E6A4346C76567A0152BEF44454E24BAA"

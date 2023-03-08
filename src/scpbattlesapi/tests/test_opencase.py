@@ -1,4 +1,4 @@
-from models import *
+from scpbattlesapi.models import *
 
 
 item_group_probabilities = {
@@ -19,6 +19,7 @@ user = User(
     is_banned=False,
     first_login=0
 )
+]
 
 case = Case(
     item_group_probabilities=item_group_probabilities,
