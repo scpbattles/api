@@ -11,12 +11,11 @@ from config import Config
 from database import Database
 from exceptions import InvalidKey, FailedToConsume
 
-
 class SteamAPI:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
 
-    def get_inventory(self, steam_id: int) -> Dict[str, int]:
+    def fetch_inventory(self, steam_id: int) -> Dict[str, int]:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
         }
@@ -92,6 +91,7 @@ class SteamAPI:
 
         response.raise_for_status()
 
+
 class User:
     def __init__(
             self,
@@ -121,7 +121,7 @@ class User:
     @property
     def inventory(self) -> Dict[str, int]:
 
-        inventory = self.api.steam_api.get_inventory(
+        inventory = self.api.steam_api.fetch_inventory(
             steam_id=self.steam_id
         )
 
@@ -164,7 +164,6 @@ class User:
 
         self.give_default_items()
 
-
 class Item:
     def __init__(self, item_id: int, item_def: int, owner: User) -> None:
         self.item_id = item_id
@@ -173,7 +172,6 @@ class Item:
 
     def consume(self):
         self.owner.consume_item(self.item_id)
-
 
 class Key(Item):
     pass
@@ -224,7 +222,6 @@ class Case(Item):
         awarded_item_def = random.choice(possible_items)
 
         return awarded_item_def
-
 
 class Server:
     def __init__(
@@ -294,6 +291,19 @@ class SCPBattlesAPI:
         
         elif model_type is Server:
             self._save_server(model)
+        
+    def fetch_case(self, item_id: int, user: Union[User,int]) -> Case:
+        
+        inventory = self.steam_api.fetch_inventory(user)
+        
+        item_ids = []
+
+        for item in inventory:
+            item_ids.append(
+                item["itemid"]
+            )
+
+
 
     def _save_user(self, user: User) -> None:
         

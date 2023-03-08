@@ -1,23 +1,16 @@
-import logging
 import random
-import secrets 
-import time 
-import json
 import os
 
 import flask
 from flask import make_response, request, jsonify
 from flask_restful import Resource
-import requests
 from requests import HTTPError
-import yaml
 
-from steamapi import get_inventory, add_item, consume_item
 from database import Database
 from config import Config
 import models
 
-
+api = models.SCPBattlesAPI(database_path="test_database.yaml", config_path="test_config.yaml")
 
 class Address(Resource):
 
@@ -26,7 +19,6 @@ class Address(Resource):
         response.headers["Response-Type"] = "get_ip"
         
         return response
-
 
 class Case(Resource):
 
@@ -42,40 +34,10 @@ class Case(Resource):
             return "Missing key_item_id query parameter", 400
         if case_item_id is None:
             return "Missing case_item_id query parameter", 400
-
-        with Config() as config:
-            steam_api_key = config["steam_api_key"]
-            item_group_probabilities = config["case_probabilities"][case_item_id]
-            default_items = config["default_items"]
-
-        with Database() as database:
-            user_data = database["user_data"][steam_id]
-
-        steam_api = models.SteamAPI(
-            steam_api_key=steam_api_key
-        )
-
-        user = models.User(
-            steam_id=steam_id,
-            is_banned=user_data["is_banned"],
-            first_login=user_data["first_login"],
-            steam_api=steam_api,
-            default_items=default_items,
-            token=user_data["token"],
-            token_expiration=user_data["token_expiration"],
-            elo=user_data["elo"],
-            exp=user_data["exp"]
-        )
-
-        inventory = user.get_inventory()
-
-        case = models.Case(
-            item_group_probabilities=item_group_probabilities,
-            valid_keys=
-        )
         
+        user = api.fetch_user(steam_id)
 
-        
+
         
         response = make_response(
             jsonify(
