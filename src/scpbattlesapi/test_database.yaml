@@ -1,24 +1,23 @@
 servers:
-  EPIC SERVERRRR:
-    current_coalition: 2
-    current_foundation: 4
+  example_server:
+    current_coalition: 0
+    current_foundation: 0
     ip: 127.0.0.1
     is_official: false
-    last_pinged: 909324023
-    map: COol!
-    max_players: 2000
-    mode: A cool mode!
-    name: EPIC SERVERRRR
-    owner_discord_id: 3498934
-    port: 234
-    token: a token!!!
-    version: '12545'
-
+    last_pinged: 0
+    map: example_map
+    max_players: 0
+    mode: example_mode
+    name: example_server
+    owner_discord_id: 0
+    port: 0
+    token: example_token
+    version: '0'
 users:
   76561198081096335:
     elo: 420
-    exp: 421
-    first_login: 1645489437.0773406
+    exp: 0
+    first_login: 0
     is_banned: false
-    token: null
+    token: 0
     token_expiration: 0
