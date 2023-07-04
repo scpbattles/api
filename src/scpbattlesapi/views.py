@@ -7,7 +7,7 @@ from flask import make_response, request, jsonify
 from flask_restful import Resource
 from requests import HTTPError
 
-from models import DatabaseHandler, NotAUser
+from scpbattlesapi.models import Key, DatabaseHandler, NotAUser, InvalidKey
 
 db = DatabaseHandler(database_path="test_database.yaml", config_path="test_config.yaml")
 
@@ -30,7 +30,7 @@ class Case(Resource):
 
         if steam_id is None or key_item_id is None or case_item_id is None:
             response = make_response(
-                "Missing query parameters", 400
+                "missing query parameters", 400
             )
 
             response.headers["Response-Type"] = "open_case"
@@ -43,29 +43,27 @@ class Case(Resource):
         except NotAUser:
 
             response = make_response(
-                "Invalid steam id", 400
+                "user not in database", 400
             )
 
             response.headers["Response-Type"] = "open_case"
 
             return response
 
-        inventory = user.inventory
-
-        if key_item_id not in inventory:
+        if key_item_id not in user.inventory:
             
             response = make_response(
-                "Key not in inventory", 400
+                "key not in inventory", 400
             )
 
             response.headers["Response-Type"] = "open_case"
 
             return response
         
-        if case_item_id not in inventory:
+        if case_item_id not in user.inventory:
 
             response = make_response(
-                "Case not in inventory", 400
+                "case not in inventory", 400
             )
 
             response.headers["Response-Type"] = "open_case"
@@ -75,7 +73,28 @@ class Case(Resource):
         key = user.inventory[case_item_id]
         case = user.inventory[case_item_id]
 
-        awarded_item, random_number = case.open(key)
+        if type(case) is not Case:
+
+            response = make_response(
+                "specified case is not a case", 400
+            )
+
+            response.headers["Response-Type"] = "open_case"
+
+            return response
+
+        try:
+            awarded_item, random_number = case.open(key)
+
+        except InvalidKey:
+
+            response = make_response(
+                "key incompatible with case type", 400
+            )
+
+            response.headers["Response-Type"] = "open_case"
+
+            return response
 
         response = make_response(
             jsonify(
