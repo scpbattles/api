@@ -7,9 +7,9 @@ from flask import make_response, request, jsonify
 from flask_restful import Resource
 from requests import HTTPError
 
-from databasehandler import DatabaseHandler, NotAUser
+from models import DatabaseHandler, NotAUser
 
-database = DatabaseHandler(database_path="")
+db = DatabaseHandler(database_path="test_database.yaml", config_path="test_config.yaml")
 
 class Address(Resource):
 
@@ -38,7 +38,7 @@ class Case(Resource):
             return response
         
         try:
-            user = database.fetch_user(steam_id)
+            user = db.fetch_user(steam_id)
 
         except NotAUser:
 
@@ -72,15 +72,51 @@ class Case(Resource):
 
             return response
         
-        case = database.
+        key = user.inventory[case_item_id]
+        case = user.inventory[case_item_id]
+
+        awarded_item, random_number = case.open(key)
+
+        response = make_response(
+            jsonify(
+                {
+                    "awarded_item": awarded_item,
+                    "random_number": random_number
+                }
+            )
+        )
+
+        response.headers["Response-Type"] = "open_case"
+
+        return response
+
 
 class RegisterServer(Resource):
+    # this needs to be finished!
     def put(self, server_id):
         
-        pass
+        # make sure server with this ID doesnt already exist
+        try:
+            server = db.fetch_server(
+                server_id
+            )
+
+        except KeyError:
+            pass 
+
+        else:
+            response = make_response(
+                "Server name taken", 400
+            )
+
+            response.headers["Response-Type"] = "register_server"
+
+            return response
+
 
     def delete(self, server_id):
         
+        # this needs to be finished
         pass
     
 class ServerList(Resource):

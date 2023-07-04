@@ -1,6 +1,5 @@
-from models import User, Server, Case 
+from models import DatabaseHandler, User, Server, Case 
 from steamapi import SteamAPI
-from databasehandler import DatabaseHandler
 
 steam_api = SteamAPI("E6A4346C76567A0152BEF44454E24BAA")
 
@@ -8,5 +7,13 @@ database_handler = DatabaseHandler(database_path="test_database.yaml", config_pa
 
 user = database_handler.fetch_user(76561198081096335)
 
-for item in user.inventory.values():
-    print(type(item))
+inventory = user.inventory
+
+print(inventory)
+
+key = inventory[4212593081292708990]
+case = inventory[4212593081292717064]
+
+awarded_item = case.open(key)
+
+print(awarded_item)

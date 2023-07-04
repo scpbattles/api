@@ -76,7 +76,7 @@ class SteamAPI:
             "key": self.api_key,
             "appid": 2173020,
             "steamid": steam_id,
-            "itemdef id[0]": item_def
+            "itemdefid[0]": item_def
         }
 
         response = requests.post('http://api.steampowered.com/IInventoryService/AddItem/v1', params=parameters,

@@ -1,3 +1,6 @@
+case_key_map:
+  51:
+  - 52
 case_probabilities:
   51:
     5999:
@@ -49,7 +52,4 @@ default_items:
 item_model_map:
   51: Case
   52: Key
-key_case_map:
-  52:
-  - 51
 steam_api_key: E6A4346C76567A0152BEF44454E24BAA

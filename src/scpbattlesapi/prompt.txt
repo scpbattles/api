@@ -1,4 +1,16 @@
-from typing import List, Dict, Type, Union, Tuple
+Generaete documentation for my python project. The project is laid out as follows:
+
+scpbattlesapi
+├── __init__.py
+├── models.py
+├── steamapi.py
+└── yamlhandler.py
+
+Here are the contents of the modules:
+models.py
+-----------
+
+from typing import List, Dict, Type, Union
 import secrets 
 import time 
 import random
@@ -6,18 +18,8 @@ import random
 from steamapi import SteamAPI
 from yamlhandler import YAMLHandler
 
-# this is kruz from may 17 2023
-# im looking back at this code and realizing how good it is
-# models are constructed with parameters loaded from database
-# this allows models to exist purely in memory and thus can be created purely in memory
-# this means that we can create a new model in memory then save it to the database
-# models contain a pointer to the database handler to interface with data that is not specific itself
-# this allows us to play with live data from the database without worrying that its out of date
-
-# i remember struggling with this project a lot but i got it so right
-
-# TODO: move this its own file and import it if TYPE_CHECKING
-class DatabaseHandler:
+# prefer if this was in its own file, but circular import issues
+class DatabaseHandler: # not the best name
     def __init__(self, database_path: str, config_path: str, bad_words_path: str, steam_api: SteamAPI):
         
         self.database_path = database_path
@@ -228,14 +230,12 @@ class User(Model):
 
 
     def consume_item(self, item: "Item") -> None:
-
         self.steam_api.consume_item(
             item_id=item.item_id,
             steam_id=self.steam_id
         )
 
     def add_item(self, item_def: int) -> None:
-
         self.steam_api.add_item(
             item_def=item_def,
             steam_id=self.steam_id
@@ -243,7 +243,7 @@ class User(Model):
 
     def give_default_items(self) -> None:
 
-        for item in self.database_handler.default_items:
+        for item in self.default_items:
             self.add_item(
                 item_def=item.item_def
             )
@@ -257,8 +257,8 @@ class User(Model):
 
     def reset_inventory(self):
 
-        inventory = self.inventory
-        
+        inventory = self.get_inventory()
+
         for item in inventory.values():
             self.consume_item(
                 item.item_id
@@ -290,7 +290,7 @@ class Case(Item):
 
         super().__init__(item_id, item_def, owner, database_handler, steam_api=steam_api)
 
-    def open(self, key: Key) -> Tuple[int, int]:
+    def open(self, key: Key) -> int:
 
         if key.item_def not in self.database_handler.case_key_map[self.item_def]:
             raise InvalidKey()
@@ -371,3 +371,122 @@ class InvalidKey(Exception):
 
 class NotAUser(Exception):
     pass
+
+steamapi.py
+--------------
+import json
+from typing import Dict
+
+import requests
+
+class SteamAPI:
+    def __init__(self, api_key: str) -> None:
+        self.api_key = api_key
+
+    def get_inventory(self, steam_id: int) -> Dict[str, int]:
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+
+        parameters = {
+            "key": self.api_key,
+            "appid": 2173020,
+            "steamid": steam_id
+        }
+
+        response = requests.get("https://partner.steam-api.com/IInventoryService/GetInventory/v1/", params=parameters,
+                                headers=headers)
+
+        response.raise_for_status()
+
+        inventory = json.loads(
+            response.json()["response"]["item_json"]
+        )
+
+        parsed_inventory = {}
+
+        for item in inventory:
+            parsed_inventory[item["itemid"]] = {
+                "itemid": int(item["itemid"]),
+                "quantity": item["quantity"],
+                "itemdefid": int(item["itemdefid"])
+            }
+
+        
+        #print(parsed_inventory)
+
+        return parsed_inventory
+
+    def consume_item(self, item_id: int, steam_id: int) -> None:
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+
+        parameters = {
+            "key": self.api_key,
+            "appid": 2173020,
+            "itemid": item_id,
+            "steamid": steam_id,
+            "quantity": "1"
+        }
+
+        response = requests.post("https://partner.steam-api.com/IInventoryService/ConsumeItem/v1/", params=parameters,
+                                 headers=headers)
+
+        # response.json() doesnt fully deserialize the json
+        consumed_items = json.loads(
+            response.json()["response"]["item_json"]
+        )
+
+        if len(consumed_items) == 0:
+            raise FailedToConsume()
+
+        response.raise_for_status()
+
+    def add_item(self, item_def: int, steam_id: int) -> None:
+        headers = {
+            "Content-Type": "application/x-www-form-urlencoded"
+        }
+
+        parameters = {
+            "key": self.api_key,
+            "appid": 2173020,
+            "steamid": steam_id,
+            "itemdefid[0]": item_def
+        }
+
+        response = requests.post('http://api.steampowered.com/IInventoryService/AddItem/v1', params=parameters,
+                                 headers=headers)
+
+        response.raise_for_status()
+    
+class FailedToConsume(Exception):
+    pass
+
+yamlhandler.py
+-----------------
+import yaml
+
+
+class YAMLHandler:
+
+    def __init__(self, file_path):
+
+        self.file_path = file_path
+        self.dict=None
+
+    def __enter__(self):
+
+        # load database upon entering context
+        with open(self.file_path, "r") as file:
+            self.dict = yaml.safe_load(file)
+
+        return self.dict
+
+    def __exit__(self, exception_type, exception_value, traceback):
+
+        # save the database upon exiting context
+        with open(self.file_path, "w") as file:
+            yaml.dump(self.dict, file)
+            
+Write thorough structured documentation on the modules within this project and how to use them. Document every single method and attribute of every object
