@@ -1,0 +1,13 @@
+[Unit]
+Description=SCP Battles API
+After=network.target
+
+[Service]
+ExecStart=python /usr/local/bin/scpbattlesapi
+StandardOutput=inherit
+StandardError=inherit
+Restart=always
+User=root
+
+[Install]
+WantedBy=multi-user.target
