@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, make_response, render_template
 from flask_restful import Api, Resource
 
-from scpbattlesapi.views import UserInfo, ServerList, Server, RegisterServer, Address, Wallpaper, Case
+from views import UserInfo, ServerList, Server, RegisterServer, Address, Wallpaper, Case
 
 if __name__ == "__main__":
 

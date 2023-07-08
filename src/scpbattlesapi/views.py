@@ -7,7 +7,8 @@ from flask import make_response, request, jsonify
 from flask_restful import Resource
 from requests import HTTPError
 
-from scpbattlesapi.models import Key, DatabaseHandler, NotAUser, InvalidKey
+from models import Key, InvalidKey
+from database import DatabaseHandler, NotAUser
 
 db = DatabaseHandler(database_path="test_database.yaml", config_path="test_config.yaml")
 
