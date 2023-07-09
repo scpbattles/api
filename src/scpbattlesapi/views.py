@@ -10,7 +10,7 @@ from requests import HTTPError
 from models import Key, InvalidKey
 from database import DatabaseHandler, NotAUser
 
-db = DatabaseHandler(database_path="test_database.yaml", config_path="test_config.yaml")
+db = DatabaseHandler(connection_string="test_database.yaml", config_path="test_config.yaml")
 
 class Address(Resource):
 

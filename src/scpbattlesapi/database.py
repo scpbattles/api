@@ -1,13 +1,15 @@
 from typing import List, Dict, Type, TYPE_CHECKING
 
+from pymongo.mongo_client import MongoClient
+
 from yamlhandler import YAMLHandler
 from steamapi import SteamAPI
 from models import User, Server, Item
 
 class DatabaseHandler:
-    def __init__(self, database_path: str, config_path: str, bad_words_path: str, steam_api: SteamAPI):
+    def __init__(self, connection_string: str, config_path: str, bad_words_path: str, steam_api: SteamAPI):
         
-        self.database_path = database_path
+        self.database = MongoClient(connection_string)
         self.config_path = config_path
         self.bad_words_path = bad_words_path
         self.steam_api = steam_api
@@ -43,7 +45,7 @@ class DatabaseHandler:
 
     def fetch_user(self, steam_id: int) -> "User":
         
-        with YAMLHandler(self.database_path) as database:
+        with YAMLHandler(self.connection_string) as database:
 
             try:
                 user_data = database["users"][steam_id]
@@ -66,7 +68,7 @@ class DatabaseHandler:
     
     def fetch_server(self, server_id: str) -> "Server":
 
-        with YAMLHandler(self.database_path) as database:
+        with YAMLHandler(self.connection_string) as database:
             
             server_data = database[server_id]
         
@@ -91,7 +93,7 @@ class DatabaseHandler:
 
     def save_user(self, user: "User") -> None:
         
-        with YAMLHandler(self.database_path) as database:
+        with YAMLHandler(self.connection_string) as database:
 
             database["users"][user.steam_id] = {
                 "is_banned": user.is_banned,
@@ -104,7 +106,7 @@ class DatabaseHandler:
 
     def save_server(self, server: "Server") -> None:
         
-        with YAMLHandler(self.database_path) as database:
+        with YAMLHandler(self.connection_string) as database:
 
             database["servers"][server.name] = {
                 "ip": server.ip,
