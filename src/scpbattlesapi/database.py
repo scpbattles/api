@@ -1,3 +1,4 @@
+import os
 from typing import List, Dict, Type, TYPE_CHECKING
 
 from pymongo.mongo_client import MongoClient
@@ -9,7 +10,15 @@ from scpbattlesapi.models import User, Server, Item
 class DatabaseHandler:
     def __init__(self, connection_string: str, config_path: str, bad_words_path: str, steam_api: SteamAPI):
         
-        self.database = MongoClient(connection_string).scpbattles
+        self.mongo_client = MongoClient(connection_string)
+        self.database = self.mongo_client.scpbattles
+
+        if not os.path.exists(config_path):
+            raise FileNotFoundError("Specified config file path does not exist")
+        
+        if not os.path.exists(bad_words_path):
+            raise FileNotFoundError("Specified bad words file path does not exist")
+        
         self.config_path = config_path
         self.bad_words_path = bad_words_path
         self.steam_api = steam_api
