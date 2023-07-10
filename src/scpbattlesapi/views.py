@@ -7,10 +7,10 @@ from flask import make_response, request, jsonify
 from flask_restful import Resource
 from requests import HTTPError
 
-from models import Key, InvalidKey
-from database import DatabaseHandler, NotAUser
+from scpbattlesapi.models import Key, InvalidKey
+from scpbattlesapi.database import DatabaseHandler, NotAUser
 
-db = DatabaseHandler(connection_string="test_database.yaml", config_path="test_config.yaml")
+db = DatabaseHandler(connection_string="localhost", config_path="test_config.yaml")
 
 class Address(Resource):
 

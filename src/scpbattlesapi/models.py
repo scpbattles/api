@@ -3,11 +3,11 @@ import secrets
 import time 
 import random
 
-from steamapi import SteamAPI
-from yamlhandler import YAMLHandler
+from scpbattlesapi.steamapi import SteamAPI
+from scpbattlesapi.yamlhandler import YAMLHandler
 
 if TYPE_CHECKING:
-    from database import DatabaseHandler
+    from scpbattlesapi.database import DatabaseHandler
 
 # this is kruz from may 17 2023
 # im looking back at this code and realizing how good it is

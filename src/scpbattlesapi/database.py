@@ -2,14 +2,14 @@ from typing import List, Dict, Type, TYPE_CHECKING
 
 from pymongo.mongo_client import MongoClient
 
-from yamlhandler import YAMLHandler
-from steamapi import SteamAPI
-from models import User, Server, Item
+from scpbattlesapi.yamlhandler import YAMLHandler
+from scpbattlesapi.steamapi import SteamAPI
+from scpbattlesapi.models import User, Server, Item
 
 class DatabaseHandler:
     def __init__(self, connection_string: str, config_path: str, bad_words_path: str, steam_api: SteamAPI):
         
-        self.database = MongoClient(connection_string)
+        self.database = MongoClient(connection_string).scpbattles
         self.config_path = config_path
         self.bad_words_path = bad_words_path
         self.steam_api = steam_api
