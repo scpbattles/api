@@ -1,11 +1,5 @@
-import random
-import os
-import time
-
-import flask
 from flask import make_response, request, jsonify
 from flask_restful import Resource
-from requests import HTTPError
 
 from scpbattlesapi.models import Key, InvalidKey
 from scpbattlesapi.database import DatabaseHandler, NotAUser
