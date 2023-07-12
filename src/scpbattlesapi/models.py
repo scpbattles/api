@@ -52,7 +52,10 @@ class User(Model):
         self.token_expiration = token_expiration
         self.elo = elo
         self.exp = exp
-        
+    
+    def save(self):
+        self.database_handler.save_user(self)
+
     @property
     def inventory(self) -> Dict[int, Type["Item"]]:
 
