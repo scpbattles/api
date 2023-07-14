@@ -53,18 +53,18 @@ class DatabaseHandler:
         return case_key_map
 
     def fetch_user(self, steam_id: int) -> "User":
-        
-        with YAMLHandler(self.connection_string) as database:
 
-            try:
-                user_data = database["users"][steam_id]
-            except KeyError:
-                raise NotAUser()
+        user_data = self.database.users.find_one(
+            {"steam_id": steam_id}
+        )
+
+        if not user_data:
+            raise NotAUser(f"no user with steam_id {steam_id} in database")
         
         user = User(
             steam_id=steam_id,
             is_banned=user_data["is_banned"],
-            first_login=user_data["first_login"],
+            creation_date=user_data["creation_date"],
             steam_api=self.steam_api,
             token=user_data["token"],
             token_expiration=user_data["token_expiration"],
@@ -77,11 +77,15 @@ class DatabaseHandler:
     
     def fetch_server(self, server_id: str) -> "Server":
 
-        with YAMLHandler(self.connection_string) as database:
-            
-            server_data = database[server_id]
+        server_data = self.database.servers.find_one(
+            {"id": server_id}
+        )
+
+        if not server_data:
+            raise KeyError(f"no server with id {server_id}")
         
         server = Server(
+            database_handler=self,
             steam_api=self.steam_api,
             ip=server_data["ip"],
             token=server_data["token"],
@@ -95,29 +99,32 @@ class DatabaseHandler:
             map=server_data["map"],
             mode=server_data["mode"],
             port=server_data["port"],
-            name=server_data["name"]
+            id=server_data["id"]
         )
 
         return server
 
     def save_user(self, user: "User") -> None:
-        
-        with YAMLHandler(self.connection_string) as database:
 
-            database["users"][user.steam_id] = {
+        self.database.users.find_one_and_replace(
+            {"steam_id": user.steam_id},
+            {
+                "steam_id": user.steam_id,
                 "is_banned": user.is_banned,
-                "first_login": user.first_login,
+                "creation_date": user.creation_date,
                 "token": user.token,
                 "token_expiration": user.token_expiration,
                 "elo": user.elo,
                 "exp": user.exp
-            }
-
+            }, 
+            upsert=True
+        )
+    
     def save_server(self, server: "Server") -> None:
         
-        with YAMLHandler(self.connection_string) as database:
-
-            database["servers"][server.name] = {
+        self.database.servers.find_one_and_replace(
+            {"id": server.id},
+            {
                 "ip": server.ip,
                 "token": server.token,
                 "owner_discord_id": server.owner_discord_id,
@@ -130,8 +137,10 @@ class DatabaseHandler:
                 "map": server.map,
                 "mode": server.mode,
                 "port": server.port,
-                "name": server.name
-            }
+                "id": server.id
+            },
+            upsert=True
+        )
 
 class NotAUser(Exception):
     pass
