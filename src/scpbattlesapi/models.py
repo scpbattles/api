@@ -34,7 +34,7 @@ class User(Model):
             self,
             steam_id: int,
             is_banned: bool,
-            first_login: float,
+            creation_date: float,
             database_handler: "DatabaseHandler",
             steam_api: SteamAPI,
             token: str,
@@ -47,7 +47,7 @@ class User(Model):
 
         self.steam_id = steam_id
         self.is_banned = is_banned
-        self.first_login = first_login
+        self.creation_date = creation_date
         self.token = token
         self.token_expiration = token_expiration
         self.elo = elo
@@ -232,7 +232,7 @@ class Server(Model):
         map: str, 
         mode: str,
         port: int,
-        name: str
+        id: str
     ) -> None:
         
         super().__init__(database_handler=database_handler, steam_api=steam_api)
@@ -249,7 +249,7 @@ class Server(Model):
         self.map = map
         self.mode = mode 
         self.port = port 
-        self.name = name
+        self.id = id
     
     def save(self):
         self.database_handler.save_server(self)
