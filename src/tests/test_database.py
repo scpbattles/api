@@ -62,30 +62,142 @@ class DatabaseTest(unittest.TestCase):
     
     def test_fetch_user(self):
 
+        user = self.database.fetch_user(76561198191668608)
+
         self.assertIsInstance(
-            self.database.fetch_user(76561198081096335),
+            user,
             User
+        )
+
+        self.assertIsInstance(
+            user.steam_id,
+            int
+        )
+
+        self.assertIsInstance(
+            user.creation_date,
+            float
+        )
+
+        self.assertIsInstance(
+            user.elo,
+            int
+        )
+
+        self.assertIsInstance(
+            user.exp,
+            int 
+        )
+
+        self.assertIsInstance(
+            user.is_banned,
+            bool
+        )
+
+        self.assertIsInstance(
+            user.token,
+            str
+        )
+
+        self.assertIsInstance(
+            user.token_expiration,
+            int
         )
     
     def test_fetch_server(self):
+        
+        server = self.database.fetch_server("test")
 
         self.assertIsInstance(
-            self.database.fetch_server(os.environ.get("TEST_SERVER_TOKEN")),
+            server,
             Server
+        )
+
+        self.assertIsInstance(
+            server.current_coalition,
+            int
+        )
+        
+        self.assertIsInstance(
+            server.current_foundation,
+            int 
+        )
+
+        self.assertIsInstance(
+            server.database_handler,
+            DatabaseHandler,
+        )
+
+        self.assertIsInstance(
+            server.id,
+            str 
+        )
+
+        self.assertIsInstance(
+            server.ip,
+            str 
+        )
+
+        self.assertIsInstance(
+            server.token,
+            str 
+        )
+
+        self.assertIsInstance(
+            server.owner_discord_id,
+            int
+        )
+
+        self.assertIsInstance(
+            server.last_pinged,
+            float
+        )
+
+        self.assertIsInstance(
+            server.is_official,
+            bool 
+        )
+
+        self.assertIsInstance(
+            server.version,
+            str 
+        )
+        
+        self.assertIsInstance(
+            server.max_players,
+            int 
+        )
+
+        self.assertIsInstance(
+            server.map,
+            str 
+        )
+
+        self.assertIsInstance(
+            server.mode,
+            str 
+        )
+
+        self.assertIsInstance(
+            server.port,
+            int
         )
 
     def test_save_user(self):
         
         # we will use this to ensure saving works properly
-        token = uuid.uuid4()
+        token = str(uuid.uuid4())
 
         test_user = User(
-            0,
+            steam_id=0,
             is_banned=False,
-            first_login=0,
+            creation_date=0,
             database_handler=self.database,
             steam_api=self.database.steam_api,
-            token=token
+            token=token,
+            token_expiration=0,
+            elo=0,
+            exp=0
         )
 
         self.database.save_user(test_user)
@@ -118,14 +230,14 @@ class DatabaseTest(unittest.TestCase):
             map="example map",
             mode="example mode",
             port=0,
-            name="Test Server"
+            id="test"
         )
 
         self.database.save_server(server)
 
         server = None 
 
-        server = self.database.fetch_server(os.environ.get("TEST_SERVER_TOKEN"))
+        server = self.database.fetch_server("test")
 
         self.assertEqual(
             last_pinged,
