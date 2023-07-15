@@ -20,7 +20,7 @@ class DatabaseTest(unittest.TestCase):
         steam_api = SteamAPI(steam_api_key)
         
         self.database = DatabaseHandler(
-            connection_string="192.168.1.130", 
+            connection_string="localhost", 
             config_path="/etc/scpbattlesapi/config.yaml", 
             steam_api=steam_api, 
             bad_words_path="/etc/scpbattlesapi/bad_words.json"
