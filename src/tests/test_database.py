@@ -60,9 +60,9 @@ class DatabaseTest(unittest.TestCase):
             dict
         )
     
-    def test_fetch_user(self):
+    def test_fetch_users(self):
 
-        user = self.database.fetch_user(76561198191668608)
+        user = self.database.fetch_users(is_banned=False)[0]
 
         self.assertIsInstance(
             user,
@@ -76,7 +76,7 @@ class DatabaseTest(unittest.TestCase):
 
         self.assertIsInstance(
             user.creation_date,
-            float
+            int
         )
 
         self.assertIsInstance(
@@ -104,9 +104,9 @@ class DatabaseTest(unittest.TestCase):
             int
         )
     
-    def test_fetch_server(self):
+    def test_fetch_servers(self):
         
-        server = self.database.fetch_server("test")
+        server = self.database.fetch_servers(id="test")[0]
 
         self.assertIsInstance(
             server,
@@ -204,7 +204,7 @@ class DatabaseTest(unittest.TestCase):
 
         test_user = None 
 
-        test_user = self.database.fetch_user(0)
+        test_user = self.database.fetch_users(steam_id=0)[0]
 
         self.assertEqual(
             test_user.token,
@@ -237,7 +237,7 @@ class DatabaseTest(unittest.TestCase):
 
         server = None 
 
-        server = self.database.fetch_server("test")
+        server = self.database.fetch_servers(id="test")[0]
 
         self.assertEqual(
             last_pinged,
