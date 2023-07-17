@@ -22,6 +22,10 @@ case_probabilities:
     - 34
     10000:
     - 54
+crafting_recipes:
+  result_item_id:
+  - material1_item_id
+  - material2_item_id
 default_items:
 - 2
 - 3
@@ -52,4 +56,3 @@ default_items:
 item_model_map:
   51: Case
   52: Key
-steam_api_key: E6A4346C76567A0152BEF44454E24BAA
