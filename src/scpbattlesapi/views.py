@@ -156,11 +156,11 @@ class ServerList(Resource):
         except NoMatchingServer:
             online_servers = []
 
-        servers_dict = {}
+        servers_list = []
 
         # this is stupid but i need to do it for compatibility :(
         for server in online_servers:
-            servers_dict[server.id] = {
+            servers_list.append( {
                 "name": server.id,
                 "ip": server.ip,
                 "port": server.port,
@@ -172,10 +172,10 @@ class ServerList(Resource):
                 "mode": server.mode,
                 "version": server.version,
                 "current_players": server.current_players
-            }
+            })
 
         response = make_response(
-            servers_dict,
+            servers_list,
             200
         )
 
