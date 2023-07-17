@@ -1,3 +1,4 @@
+import json
 import time
 import os
 import random
@@ -238,13 +239,15 @@ class UserInfo(Resource):
         )[0]
 
         response = make_response(
-            {
-                "banned": user.is_banned,
-                "creation_date": user.creation_date,
-                "elo": user.elo,
-                "exp": user.exp,
-                "user_id": "fuck"
-            },
+            jsonify(
+                {
+                    "banned": user.is_banned,
+                    "creation_date": user.creation_date,
+                    "elo": user.elo,
+                    "exp": user.exp,
+                    "user_id": str(user.steam_id)
+                }
+            ),
             200
         )
 
