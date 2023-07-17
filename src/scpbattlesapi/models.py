@@ -114,10 +114,10 @@ class User(Model):
         return inventory_processed
 
 
-    def consume_item(self, item: "Item") -> None:
+    def consume_item(self, item_id: int) -> None:
 
         self.steam_api.consume_item(
-            item_id=item.item_id,
+            item_id=item_id,
             steam_id=self.steam_id
         )
 
@@ -165,7 +165,7 @@ class Item(Model):
         self.owner = owner
 
     def consume(self):
-        self.owner.consume_item(self)
+        self.owner.consume_item(self.item_id)
 
 
 class Key(Item):
