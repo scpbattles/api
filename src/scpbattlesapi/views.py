@@ -194,7 +194,7 @@ class Server(Resource):
         id = request.args.get("name", type=str)
         port = request.args.get("port", type=int)
         map = request.args.get("map", type=str)
-        mode = request.args.get("mode", type="str")
+        mode = request.args.get("mode", type=str)
         current_players = request.args.get("current_players", type=int)
         max_players = request.args.get("max_players", type=int)
         version = request.args.get("version", type=str)
