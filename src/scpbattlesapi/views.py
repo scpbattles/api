@@ -200,7 +200,7 @@ class Server(Resource):
         version = request.args.get("version", type=str)
 
         server = db.fetch_servers(
-            id=id
+            id=server_id
         )[0]
         
         if server.token != auth_token:
