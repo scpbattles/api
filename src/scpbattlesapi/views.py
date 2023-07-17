@@ -243,7 +243,7 @@ class UserInfo(Resource):
                 "creation_date": user.creation_date,
                 "elo": user.elo,
                 "exp": user.exp,
-                "user_id": steamid
+                "user_id": "fuck"
             },
             200
         )
