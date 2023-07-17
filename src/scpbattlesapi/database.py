@@ -116,7 +116,8 @@ class DatabaseHandler:
         max_players: int = None,
         map: str = None,
         mode: "str" = None,
-        port: int = None
+        port: int = None,
+        current_players: int = None
         
     ) -> List["Server"]:
 
@@ -155,7 +156,8 @@ class DatabaseHandler:
                 map=server_data["map"],
                 mode=server_data["mode"],
                 port=server_data["port"],
-                id=server_data["id"]
+                id=server_data["id"],
+                current_players=server_data["current_players"]
             )
 
             matching_servers.append(
@@ -197,7 +199,8 @@ class DatabaseHandler:
                 "map": server.map,
                 "mode": server.mode,
                 "port": server.port,
-                "id": server.id
+                "id": server.id,
+                "current_players": server.current_players
             },
             upsert=True
         )
