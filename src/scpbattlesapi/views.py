@@ -248,7 +248,7 @@ class UserInfo(Resource):
             200
         )
 
-        response.headers["Reponse-Type"] = "get_user_info"
+        response.headers["Response-Type"] = "get_user_info"
 
         return response
 
