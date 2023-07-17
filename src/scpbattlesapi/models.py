@@ -232,7 +232,9 @@ class Server(Model):
         map: str, 
         mode: str,
         port: int,
-        id: str
+        id: str,
+        current_players: int
+
     ) -> None:
         
         super().__init__(database_handler=database_handler, steam_api=steam_api)
@@ -250,6 +252,7 @@ class Server(Model):
         self.mode = mode 
         self.port = port 
         self.id = id
+        self.current_players = current_players
     
     def save(self):
         self.database_handler.save_server(self)
