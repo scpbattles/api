@@ -7,9 +7,9 @@ import flask
 from flask import make_response, request, jsonify
 from flask_restful import Resource
 
-from scpbattlesapi.models import Key, InvalidKey
+from scpbattlesapi import models
 from scpbattlesapi.database import DatabaseHandler, NoMatchingUser, NoMatchingServer
-from scpbattlesapi.steamapi import SteamAPI
+from scpbattlesapi.steamapi import SteamAPI, FailedToConsume
 
 db = DatabaseHandler(
     connection_string="localhost", 
@@ -26,6 +26,88 @@ class Address(Resource):
         response.headers["Response-Type"] = "get_ip"
         
         return response
+
+class Crafting(Resource):
+
+    def get(self):
+
+        material_ids = request.args.getlist("material", type=int)
+        steam_id = request.args.get("steam_id", type=int)
+        
+        if len(material_ids) == 0:
+            response = make_response(
+                "missing or invalid material query parameters", 400
+            )
+
+            response.headers["Response-Type"] = "crafting"
+
+            return response
+        
+        if steam_id == None:
+            response = make_response(
+                "missing or invalid steam_id query parameter", 400
+            )
+
+            response.headers["Response-Type"] = "crafting"
+
+            return response
+
+        result_item_id = None
+
+        # find the matching result_item_id for given crafting materials
+        for possible_result_item_id, required_material_ids in db.crafting_recipes.items():
+            if set(material_ids) == set(required_material_ids):
+                result_item_id = possible_result_item_id
+            
+        if result_item_id == None:
+            response = make_response(
+                "no result item from given materials", 404
+            )
+
+            response.headers["Response-Type"] = "crafting"
+
+            return response
+
+
+        try:
+            user = db.fetch_users(
+                steam_id=steam_id
+            )[0]
+
+        except NoMatchingUser:
+
+            response = make_response(
+                "no such user in database", 404
+            )
+
+            response.headers["Response-Type"] = "crafting"
+
+            return response
+        
+        if not set(user.inventory.keys()).intersection(set(material_ids)):
+            response = make_response(
+                "inventory missing specified material item ids",
+                404
+            )
+
+            response.headers["Response-Type"] = "crafting"
+            
+            return response
+        
+        
+
+        # for item_id in material_ids:
+            
+        #     try:
+        #         user.consume_item(item_id)
+        #     except FailedToConsume:
+        #         response = make_response(
+        #             f"missing item {item_id}", 404
+        #         )
+
+        #         response.headers["Response-Type"] = "crafting"
+
+        #         return response
 
 class Case(Resource):
 
@@ -90,10 +172,12 @@ class Case(Resource):
 
             return response
 
+        case: models.Case 
+
         try:
             awarded_item, random_number = case.open(key)
 
-        except InvalidKey:
+        except models.InvalidKey:
 
             response = make_response(
                 "key incompatible with case type", 400
