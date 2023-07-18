@@ -1,11 +1,36 @@
 import os
-from typing import List, Dict, Type, TYPE_CHECKING
+from typing import List, Dict, Type, TYPE_CHECKING, Literal, TypedDict
 
 from pymongo.mongo_client import MongoClient
 
 from scpbattlesapi.yamlhandler import YAMLHandler
 from scpbattlesapi.steamapi import SteamAPI
-from scpbattlesapi.models import User, Server, Item
+
+class Server(TypedDict):
+
+    id: str
+    ip: str
+    token: str
+    owner_discord_id: int
+    last_pinged: int
+    is_official: bool
+    current_foundation: int
+    current_coalition: int
+    version: str
+    max_players: int
+    map: str
+    mode: "str"
+    port: int
+    current_players: int
+
+class User(TypedDict):
+        steam_id: int
+        is_banned: bool
+        creation_date: float
+        token: str
+        token_expiration: float
+        elo: int
+        exp: int
 
 class DatabaseHandler:
     def __init__(self, connection_string: str, config_path: str, bad_words_path: str, steam_api: SteamAPI):
@@ -68,7 +93,7 @@ class DatabaseHandler:
         token_expiration: float = None,
         elo: int = None,
         exp: int = None
-    ) -> List["User"]:
+    ) -> List[User]:
 
         # this dictionary comprehension takes arguments provided (as a dict) to fetch_server 
         # and removes any with the value of None
@@ -78,35 +103,15 @@ class DatabaseHandler:
         del database_query["self"]
 
         # convert cursor to list
-        matching_user_documents = list(
+        matching_users = list(
             self.database.users.find(
                 database_query
             )
         )
 
-        if len(matching_user_documents) < 1:
+        if len(matching_users) < 1:
             raise NoMatchingUser(f"no user for query {database_query}")
         
-        matching_users = []
-
-        for user_data in matching_user_documents:
-        
-            user = User(
-                database_handler=self,
-                steam_api=self.steam_api,
-                steam_id=user_data["steam_id"],
-                is_banned=user_data["is_banned"],
-                creation_date=user_data["creation_date"],
-                token=user_data["token"],
-                token_expiration=user_data["token_expiration"],
-                elo=user_data["elo"],
-                exp=user_data["exp"]
-            )
-
-            matching_users.append(
-                user
-            )
-
         return matching_users
     
     def fetch_servers(
@@ -126,7 +131,7 @@ class DatabaseHandler:
         port: int = None,
         current_players: int = None
         
-    ) -> List["Server"]:
+    ) -> List[Server]:
 
         # this dictionary comprehension takes arguments provided (as a dict) to fetch_server 
         # and removes any with the value of None
@@ -136,82 +141,27 @@ class DatabaseHandler:
         del database_query["self"]
 
         # convert cursor to list
-        matching_server_documents = list(
+        matching_servers = list(
             self.database.servers.find(
                 database_query
             )
         )
 
-        if len(matching_server_documents) < 1:
+        if len(matching_servers) < 1:
             raise NoMatchingServer(f"no server for query {database_query}")
         
         matching_servers = []
 
-        for server_data in matching_server_documents:
-            server = Server(
-                database_handler=self,
-                steam_api=self.steam_api,
-                ip=server_data["ip"],
-                token=server_data["token"],
-                owner_discord_id=server_data["owner_discord_id"],
-                last_pinged=server_data["last_pinged"],
-                is_official=server_data["is_official"],
-                current_foundation=server_data["current_foundation"],
-                current_coalition=server_data["current_coalition"],
-                version=server_data["version"],
-                max_players=server_data["max_players"],
-                map=server_data["map"],
-                mode=server_data["mode"],
-                port=server_data["port"],
-                id=server_data["id"],
-                current_players=server_data["current_players"]
-            )
-
-            matching_servers.append(
-                server
-            )
-
         return matching_servers
 
     def save_user(self, user: "User") -> None:
-
-        self.database.users.find_one_and_replace(
-            {"steam_id": user.steam_id},
-            {
-                "steam_id": user.steam_id,
-                "is_banned": user.is_banned,
-                "creation_date": user.creation_date,
-                "token": user.token,
-                "token_expiration": user.token_expiration,
-                "elo": user.elo,
-                "exp": user.exp
-            }, 
-            upsert=True
-        )
-    
-    def save_server(self, server: "Server") -> None:
         
-        self.database.servers.find_one_and_replace(
-            {"id": server.id},
-            {
-                "ip": server.ip,
-                "token": server.token,
-                "owner_discord_id": server.owner_discord_id,
-                "last_pinged": server.last_pinged,
-                "is_official": server.is_official,
-                "current_foundation": server.current_foundation,
-                "current_coalition": server.current_coalition,
-                "version": server.version,
-                "max_players": server.max_players,
-                "map": server.map,
-                "mode": server.mode,
-                "port": server.port,
-                "id": server.id,
-                "current_players": server.current_players
-            },
-            upsert=True
-        )
-
+        """
+        Update or create user
+        
+        New users must fill all fields
+        """
+    
 class NoMatchingUser(Exception):
     pass
 
