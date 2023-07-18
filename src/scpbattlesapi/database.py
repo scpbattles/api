@@ -51,6 +51,13 @@ class DatabaseHandler:
             case_key_map = config["case_key_map"]
         
         return case_key_map
+    
+    @property
+    def crafting_recipes(self) -> Dict[int, List[int]]:
+        with YAMLHandler(self.config_path) as config:
+            crafting_recipes = config["crafting_recipes"]
+        
+        return crafting_recipes
 
     def fetch_users(
         self, 
