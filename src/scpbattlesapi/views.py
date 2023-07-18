@@ -7,7 +7,6 @@ import flask
 from flask import make_response, request, jsonify
 from flask_restful import Resource
 
-from scpbattlesapi import models
 from scpbattlesapi.database import DatabaseHandler, NoMatchingUser, NoMatchingServer
 from scpbattlesapi.steamapi import SteamAPI, FailedToConsume
 
@@ -200,7 +199,6 @@ class Case(Resource):
 
         return response
 
-
 class RegisterServer(Resource):
     # this needs to be finished!
     def put(self, server_id):
@@ -245,18 +243,18 @@ class ServerList(Resource):
 
         # this is stupid but i need to do it for compatibility :(
         for server in online_servers:
-            servers_dict[server.id] = {
-                "name": server.id,
-                "ip": server.ip,
-                "port": server.port,
-                "current_coalition": server.current_coalition,
-                "current_foundation": server.current_foundation,
-                "max_players": server.max_players,
-                "official": server.is_official,
-                "map": server.map,
-                "mode": server.mode,
-                "version": server.version,
-                "current_players": server.current_players
+            servers_dict[server["id"]] = {
+                "name": server["id"],
+                "ip": server["ip"],
+                "port": server["port"],
+                "current_coalition": server["current_coalition"],
+                "current_foundation": server["current_foundation"],
+                "max_players": server["max_players"],
+                "official": server["is_official"],
+                "map": server["map"],
+                "mode": server["mode"],
+                "version": server["version"],
+                "current_players": server["current_players"]
             }
 
         response = make_response(
@@ -267,8 +265,7 @@ class ServerList(Resource):
         response.headers["Response-Type"] = "get_server_list"
 
         return response
-
-    
+  
 class Server(Resource):
 
     def put(self, server_id):
@@ -312,8 +309,6 @@ class Server(Resource):
 
         return response
 
-
-
 class UserInfo(Resource):
 
     def get(self, steamid):
@@ -325,11 +320,11 @@ class UserInfo(Resource):
         response = make_response(
             jsonify(
                 {
-                    "banned": user.is_banned,
-                    "creation_date": user.creation_date,
-                    "elo": user.elo,
-                    "exp": user.exp,
-                    "user_id": str(user.steam_id)
+                    "banned": user["is_banned"],
+                    "creation_date": user["creation_date"],
+                    "elo": user["elo"],
+                    "exp": user["exp"],
+                    "user_id": str(user["steam_id"])
                 }
             ),
             200
