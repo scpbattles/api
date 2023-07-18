@@ -23,9 +23,9 @@ case_probabilities:
     10000:
     - 54
 crafting_recipes:
-  result_item_id:
-  - material1_item_id
-  - material2_item_id
+  30:
+  - 21
+  - 32
 default_items:
 - 2
 - 3

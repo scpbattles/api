@@ -18,9 +18,9 @@ class SteamAPI:
             "steamid": steam_id
         }
 
-        response = requests.get("https://partner.steam-api.com/IInventoryService/GetInventory/v1/", params=parameters,
+        response = requests.get(f"https://partner.steam-api.com/IInventoryService/GetInventory/v1/", params=parameters,
                                 headers=headers)
-
+        
         response.raise_for_status()
 
         inventory = json.loads(
