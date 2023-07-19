@@ -23,9 +23,9 @@ case_probabilities:
     10000:
     - 54
 crafting_recipes:
-  30:
-  - 21
-  - 32
+  27:
+  - 27
+  - 25
 default_items:
 - 2
 - 3

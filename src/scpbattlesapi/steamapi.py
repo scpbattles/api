@@ -1,13 +1,25 @@
 import json
-from typing import Dict
+from typing import Dict, TypedDict, List
 
 import requests
+from requests import JSONDecodeError
+
+class FailedToConsume(Exception):
+    pass
+
+class FailedToAdd(Exception):
+    pass 
+
+class Item(TypedDict):
+    itemid: int
+    quantity: int
+    itemdefid: int 
 
 class SteamAPI:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
 
-    def get_inventory(self, steam_id: int) -> Dict[str, int]:
+    def get_inventory(self, steam_id: int) -> List[Item]:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
         }
@@ -27,19 +39,37 @@ class SteamAPI:
             response.json()["response"]["item_json"]
         )
 
-        parsed_inventory = {}
+        parsed_inventory = []
 
         for item in inventory:
-            parsed_inventory[item["itemid"]] = {
-                "itemid": int(item["itemid"]),
-                "quantity": item["quantity"],
-                "itemdefid": int(item["itemdefid"])
-            }
-
-        
-        #print(parsed_inventory)
+            parsed_inventory.append(
+                {
+                    "itemid": int(item["itemid"]),
+                    "quantity": int(item["quantity"]),
+                    "itemdefid": int(item["itemdefid"]) 
+                }
+            )
 
         return parsed_inventory
+
+    def query_inventory(self, steam_id: int, query: Item, inventory = None) -> List[Item]:
+        """
+        Search a user's inventory for items with certain attributes
+        """
+        
+        # allows passing an inventory directly to prevent inventory fetches
+        if not inventory:
+            inventory = self.get_inventory(steam_id)
+
+        matching_items = []
+
+        for item in inventory:
+            if set(query.items()).issubset(set(item.items())):
+                matching_items.append(item)
+        
+        return matching_items
+
+        
 
     def consume_item(self, item_id: int, steam_id: int) -> None:
         headers = {
@@ -82,7 +112,12 @@ class SteamAPI:
         response = requests.post('http://api.steampowered.com/IInventoryService/AddItem/v1', params=parameters,
                                  headers=headers)
 
+        try:
+            response.json()
+        except JSONDecodeError:
+            # when it fails to add items it sends up messed json for some god forsaken reason
+            raise FailedToAdd()
+
+
         response.raise_for_status()
     
-class FailedToConsume(Exception):
-    pass
