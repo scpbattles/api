@@ -52,12 +52,14 @@ class SteamAPI:
 
         return parsed_inventory
 
-    def query_inventory(self, steam_id: int, query: Item) -> List[Item]:
+    def query_inventory(self, steam_id: int, query: Item, inventory = None) -> List[Item]:
         """
         Search a user's inventory for items with certain attributes
         """
         
-        inventory = self.get_inventory(steam_id)
+        # allows passing an inventory directly to prevent inventory fetches
+        if not inventory:
+            inventory = self.get_inventory(steam_id)
 
         matching_items = []
 
