@@ -264,6 +264,21 @@ class UserInfo(Resource):
             {"steam_id": steamid}
         )
 
+        # new user
+        if user == None:
+
+            user = {
+                "steam_id": steamid,
+                "creation_date": int(time.time()),
+                "is_banned": False,
+                "elo": 500,
+                "exp": 0
+            }
+
+            db.users.insert_one(
+                user
+            )
+
         response = make_response(
             {
                 "banned": user["is_banned"],
