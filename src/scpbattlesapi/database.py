@@ -21,7 +21,5 @@ class User(TypedDict):
         steam_id: int
         is_banned: bool
         creation_date: float
-        token: str
-        token_expiration: float
         elo: int
         exp: int
