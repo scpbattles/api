@@ -233,7 +233,7 @@ class Server(Resource):
         
         if server["token"] != auth_token: response = make_response("invalid server auth token", 401); response.headers.set("Reponse-Type", "update_server"); return response
 
-        if official_server_token == os.environ.get("OFFICIAL_SERVER_TOKEN"): 
+        if official_server_token == os.environ.get("SCPBATTLES_OFFICIAL_SERVER_TOKEN"): 
             server["is_official"] = True 
 
         else:
