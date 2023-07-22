@@ -13,7 +13,7 @@ from scpbattlesapi import database
 from scpbattlesapi.steamapi import SteamAPI, FailedToConsume, FailedToAdd, Item
 from scpbattlesapi.config import ConfigHandler
 
-db = MongoClient("localhost").scpbattles
+db = MongoClient(os.environ.get("SCPBATTLES_MONGODB_ADDRESS")).scpbattles
 config = ConfigHandler("/etc/scpbattlesapi/config.yaml", "/etc/scpbattlesapi/bad_words.json")
 steam = SteamAPI(os.environ.get("STEAM_API_KEY"))
 
