@@ -10,7 +10,7 @@ class YAMLHandler:
 
     def __enter__(self):
 
-        # load database upon entering context
+        # load file upon entering context
         with open(self.file_path, "r") as file:
             self.dict = yaml.safe_load(file)
 
@@ -18,7 +18,7 @@ class YAMLHandler:
 
     def __exit__(self, exception_type, exception_value, traceback):
 
-        # save the database upon exiting context
+        # save the file upon exiting context
         with open(self.file_path, "w") as file:
             yaml.dump(self.dict, file)
             
