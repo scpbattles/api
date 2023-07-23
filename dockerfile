@@ -15,7 +15,10 @@ COPY ./src/scpbattlesapi ./scpbattlesapi
 
 # copy config files
 RUN mkdir /etc/scpbattlesapi
+RUN mkdir -p /usr/local/share/scpbattlesapi/wallpapers
 COPY config.yaml /etc/scpbattlesapi
-COPY bad_words.json /etc/scpbattlesapi
+COPY bad_words.json /etc/scpbattlesapi 
+COPY wallpapers /usr/local/share/scpbattlesapi/wallpapers
+
 
 CMD [ "gunicorn", "-b", "0.0.0.0:5000", "scpbattlesapi.app:app"]
