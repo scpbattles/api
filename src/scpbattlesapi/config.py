@@ -2,6 +2,7 @@ import os
 from typing import List, Dict, Type
 
 from scpbattlesapi.yamlhandler import YAMLHandler
+from scpbattlesapi.steamapi import Item
 
 class ConfigHandler:
     def __init__(self, config_path: str, bad_words_path: str):
@@ -30,7 +31,7 @@ class ConfigHandler:
         return case_probabilities
     
     @property
-    def item_model_map(self) -> Dict[int, Type["Item"]]:
+    def item_model_map(self) -> Dict[int, Type[Item]]:
 
         with YAMLHandler(self.config_path) as config:
             item_model_map = config["item_model_map"]
