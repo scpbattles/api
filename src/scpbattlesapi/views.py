@@ -311,3 +311,40 @@ class Wallpaper(Resource):
         response.headers["Response-Type"] = "wallpaper"
 
         return response
+
+class ItemGiftCard(Resource):
+    def get(self, code: str): 
+        
+        steam_id = request.args.get("steam_id", type=int)
+
+        card = db.itemgiftcards.find_one(
+            {"code": code}
+        )
+        
+        user = db.users.find_one(
+            {"steam_id": steam_id}
+        )
+
+        if not user: 
+            response = make_response("user not in database", 404); response.headers.set("Reponse-Type", "item-gift-card"); return response
+
+        if not card:
+            response = make_response("invalid item gift card code", 404); response.headers.set("Reponse-Type", "item-gift-card"); return response
+        
+        if card["used"]:
+            response = make_response("code has already been used", 400); response.headers.set("Reponse-Type", "item-gift-card"); return response
+        
+        steam.add_item(card["itemdef"], steam_id)
+
+        db.itemgiftcards.find_one_and_update(
+            {"code": code},
+            {"$set": {"used": True}}
+        )
+
+        response = make_response(str(card["itemdef"]), 201); response.headers.set("Reponse-Type", "item-gift-card"); return response
+        
+
+        
+        
+        
+        
