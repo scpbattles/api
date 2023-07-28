@@ -127,7 +127,7 @@ class Case(Resource):
         except HTTPError:
             response = make_response(f"steam api error trying to consume key {key_item_id}", 424); response.headers["Response-Type"] = "open_case"; return response
         
-        random_number = random.randint(9901, 10001)
+        random_number = random.randint(1, 10001)
 
         for random_number_height, possible_items in config.case_probabilites[case["itemdefid"]].items():
 
