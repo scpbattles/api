@@ -15,7 +15,7 @@ from scpbattlesapi.config import ConfigHandler
 
 db = MongoClient(os.environ.get("SCPBATTLES_MONGODB_ADDRESS")).scpbattles
 config = ConfigHandler("/etc/scpbattlesapi/config.yaml", "/etc/scpbattlesapi/bad_words.json")
-steam = SteamAPI(os.environ.get("STEAM_API_KEY"))
+steam = SteamAPI(os.environ.get("SCPBATTLES_STEAM_API_KEY"))
 
 class Address(Resource):
 
