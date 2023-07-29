@@ -1,0 +1,18 @@
+services:
+  api:
+    image: scpbattlesapi:latest
+    ports:
+      - 5000:5000
+    environment:
+      SCPBATTLES_STEAM_API_KEY: ${SCPBATTLES_STEAM_API_KEY}
+      SCPBATTLES_MONGODB_ADDDRESS: mongodb
+      SCPBATTLES_OFFICIAL_SERVER_TOKEN: ${SCPBATTLES_OFFICIAL_SERVER_TOKEN}
+  
+
+  mongodb:
+    image: mongo:7.0.0-rc8-jammy
+    ports:
+      - 27017:27017
+    volumes:
+      - ${SCPBATTLES_MONGODB_PATH}:/data/db
+    
