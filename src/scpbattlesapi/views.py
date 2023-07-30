@@ -144,15 +144,15 @@ class Case(Resource):
         except HTTPError:
             response = make_response(f"steam api error trying to consume key {key_item_id}", 424); response.headers["Response-Type"] = "open_case"; return response
         
-        random_number = random.randint(1, 10001)
+        case_random_number = random.randint(1, 10001)
 
-        awarded_item_def = roll(random_number, config.case_probabilites[case["itemdefid"]])
+        awarded_item_def = roll(case_random_number, config.case_probabilites[case["itemdefid"]])
 
         print(awarded_item_def)
 
-        random_number = 7000 #random.randint(1, 10001)
+        bonus_random_number = 7000 #random.randint(1, 10001)
 
-        awarded_bonus_item_def = roll(random_number, config.bonus_item_probabilities)
+        awarded_bonus_item_def = roll(bonus_random_number, config.bonus_item_probabilities)
 
         print(awarded_bonus_item_def)
 
@@ -176,7 +176,7 @@ class Case(Resource):
             jsonify(
                 {
                     "awarded_item": awarded_item_def,
-                    "random_number": random_number
+                    "random_number": case_random_number
                 }
             )
         )
