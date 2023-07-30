@@ -1,8 +1,7 @@
 services:
   api:
     image: scpbattlesapi:latest
-    ports:
-      - 5000:5000
+    network_mode: "host"
     environment:
       SCPBATTLES_STEAM_API_KEY: E6A4346C76567A0152BEF44454E24BAA
       SCPBATTLES_MONGODB_ADDDRESS: "192.168.0.127"
@@ -11,8 +10,7 @@ services:
 
   mongodb:
     image: mongo:7.0.0-rc8-jammy
-    ports:
-      - 27017:27017
+    network_mode: "host"
     volumes:
       - /mnt/enderchest/mongodb:/data/db
     
