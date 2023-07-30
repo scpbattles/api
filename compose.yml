@@ -1,6 +1,6 @@
 services:
   api:
-    image: scpbattlesapi:latest
+    build: .
     network_mode: "host"
     environment:
       SCPBATTLES_STEAM_API_KEY: "E6A4346C76567A0152BEF44454E24BAA"
