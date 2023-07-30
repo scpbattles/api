@@ -19,6 +19,8 @@ class SteamAPI:
     def __init__(self, api_key: str) -> None:
         self.api_key = api_key
 
+        print(self.api_key)
+
     def get_inventory(self, steam_id: int) -> List[Item]:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
