@@ -43,3 +43,10 @@ class ConfigHandler:
             crafting_recipes = config["crafting_recipes"]
         
         return crafting_recipes
+    
+    @property
+    def bonus_item_probabilities(self) -> Dict[int, List[int]]:
+        with YAMLHandler(self.config_path) as config:
+            bonus_item_probabilities = config["bonus_item_probabilities"]
+        
+        return bonus_item_probabilities

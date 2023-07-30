@@ -1,7 +1,7 @@
 import time
 import os
 import random
-from typing import List
+from typing import List, Dict
 
 import flask
 from flask import make_response, request, jsonify
@@ -16,6 +16,23 @@ from scpbattlesapi.config import ConfigHandler
 db = MongoClient(os.environ.get("SCPBATTLES_MONGODB_ADDRESS")).scpbattles
 config = ConfigHandler("/etc/scpbattlesapi/config.yaml", "/etc/scpbattlesapi/bad_words.json")
 steam = SteamAPI(os.environ.get("SCPBATTLES_STEAM_API_KEY"))
+
+def roll(random_number: int, probabilities: Dict[int, List[int]]) -> int:
+
+    for random_number_height, possible_results in probabilities.items():
+
+        if random_number <= random_number_height:
+
+            possible_results = possible_results
+
+            break
+
+        else:
+            continue
+
+    result = random.choice(possible_results)
+
+    return result
 
 class Address(Resource):
 
@@ -129,26 +146,28 @@ class Case(Resource):
         
         random_number = random.randint(1, 10001)
 
-        for random_number_height, possible_items in config.case_probabilites[case["itemdefid"]].items():
+        awarded_item_def = roll(random_number, config.case_probabilites[case["itemdefid"]])
 
-            if random_number <= random_number_height:
+        random_number = 7000 #random.randint(1, 10001)
 
-                possible_items = possible_items
+        awarded_bonus_item_def = roll(random_number, config.bonus_item_probabilities)
 
-                break
-
-            else:
-                continue
-
-        awarded_item_def = random.choice(possible_items)
-
+        # add main item
         try:
             steam.add_item(awarded_item_def, steam_id)
         except FailedToAdd:
             response = make_response(f"failed to confirm add item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
         except HTTPError:
             response = make_response(f"steam api error trying to add item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
-
+        
+        # add bonus item
+        try:
+            steam.add_item(awarded_bonus_item_def, steam_id)
+        except FailedToAdd:
+            response = make_response(f"failed to confirm add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
+        except HTTPError:
+            response = make_response(f"steam api error trying to add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
+        
         response = make_response(
             jsonify(
                 {

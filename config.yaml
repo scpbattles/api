@@ -1,6 +1,8 @@
 case_key_map:
   51:
   - 52
+  67:
+  - 52
 case_probabilities:
   51:
     5999:
@@ -22,6 +24,42 @@ case_probabilities:
     - 34
     10000:
     - 54
+  67:
+    5999:
+      - 62
+      - 74
+      - 75
+      - 76
+      - 79
+    8499:
+      - 65
+      - 66
+      - 73
+      - 78
+      - 68
+    9499:
+      - 64
+      - 70
+      - 71
+    9899:
+      - 61
+      - 81
+    1000:
+      - 69
+
+bonus_item_probabilities:
+  5999: # 60 percent
+    []
+  8499: # 25 percent
+    - 68
+    - 80
+  9499: # 10 percent
+    []
+  9899: # 4 percent
+    []
+  1000: # 1 percent
+    []
+
 crafting_recipes:
   27:
   - 27
