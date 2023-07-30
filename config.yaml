@@ -43,7 +43,7 @@ case_probabilities:
     9899:
       - 61
       - 81
-    1000:
+    10000:
       - 69
 
 bonus_item_probabilities:

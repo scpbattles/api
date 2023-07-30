@@ -7,7 +7,6 @@ services:
       SCPBATTLES_MONGODB_ADDDRESS: "192.168.0.127"
       SCPBATTLES_OFFICIAL_SERVER_TOKEN: XmrUrnMpOOSXQPRXRyStpDANnfEPQRY
   
-
   mongodb:
     image: mongo:7.0.0-rc8-jammy
     network_mode: "host"
