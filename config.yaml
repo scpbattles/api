@@ -53,6 +53,3 @@ default_items:
 - 25
 - 26
 - 27
-item_model_map:
-  51: Case
-  52: Key

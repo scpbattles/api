@@ -31,14 +31,6 @@ class ConfigHandler:
         return case_probabilities
     
     @property
-    def item_model_map(self) -> Dict[int, Type[Item]]:
-
-        with YAMLHandler(self.config_path) as config:
-            item_model_map = config["item_model_map"]
-
-        return item_model_map
-
-    @property
     def case_key_map(self) -> Dict[int, List[int]]:
         with YAMLHandler(self.config_path) as config:
             case_key_map = config["case_key_map"]
