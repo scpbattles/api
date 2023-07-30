@@ -29,8 +29,12 @@ def roll(random_number: int, probabilities: Dict[int, List[int]]) -> int:
 
         else:
             continue
+    
+    if possible_results == []:
+        result = None
 
-    result = random.choice(possible_results)
+    else:
+        result = random.choice(possible_results)
 
     return result
 
@@ -165,12 +169,15 @@ class Case(Resource):
             response = make_response(f"steam api error trying to add item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
         
         # add bonus item
-        try:
-            steam.add_item(awarded_bonus_item_def, steam_id)
-        except FailedToAdd:
-            response = make_response(f"failed to confirm add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
-        except HTTPError:
-            response = make_response(f"steam api error trying to add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
+
+        # only add bonus item def if they got it
+        if awarded_bonus_item_def:
+            try:
+                steam.add_item(awarded_bonus_item_def, steam_id)
+            except FailedToAdd:
+                response = make_response(f"failed to confirm add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
+            except HTTPError:
+                response = make_response(f"steam api error trying to add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
         
         response = make_response(
             jsonify(
