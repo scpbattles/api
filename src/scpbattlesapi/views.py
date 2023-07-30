@@ -148,9 +148,13 @@ class Case(Resource):
 
         awarded_item_def = roll(random_number, config.case_probabilites[case["itemdefid"]])
 
+        print(awarded_bonus_item_def)
+
         random_number = 7000 #random.randint(1, 10001)
 
         awarded_bonus_item_def = roll(random_number, config.bonus_item_probabilities)
+
+        print(awarded_bonus_item_def)
 
         # add main item
         try:
