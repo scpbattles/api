@@ -4,9 +4,9 @@ services:
     ports:
       - 5000:5000
     environment:
-      SCPBATTLES_STEAM_API_KEY: ${SCPBATTLES_STEAM_API_KEY}
+      SCPBATTLES_STEAM_API_KEY: E6A4346C76567A0152BEF44454E24BAA
       SCPBATTLES_MONGODB_ADDDRESS: mongodb
-      SCPBATTLES_OFFICIAL_SERVER_TOKEN: ${SCPBATTLES_OFFICIAL_SERVER_TOKEN}
+      SCPBATTLES_OFFICIAL_SERVER_TOKEN: XmrUrnMpOOSXQPRXRyStpDANnfEPQRY
   
 
   mongodb:
@@ -14,5 +14,5 @@ services:
     ports:
       - 27017:27017
     volumes:
-      - ${SCPBATTLES_MONGODB_PATH}:/data/db
+      - /mnt/enderchest/mongodb:/data/db
     
