@@ -150,7 +150,7 @@ class Case(Resource):
 
         print(awarded_item_def)
 
-        bonus_random_number = 7000 #random.randint(1, 10001)
+        bonus_random_number = random.randint(1, 10001)
 
         awarded_bonus_item_def = roll(bonus_random_number, config.bonus_item_probabilities)
 
