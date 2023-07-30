@@ -3,13 +3,13 @@ services:
     build: .
     network_mode: "host"
     environment:
-      SCPBATTLES_STEAM_API_KEY: "E6A4346C76567A0152BEF44454E24BAA"
-      SCPBATTLES_MONGODB_ADDDRESS: "192.168.0.127"
-      SCPBATTLES_OFFICIAL_SERVER_TOKEN: XmrUrnMpOOSXQPRXRyStpDANnfEPQRY
+      SCPBATTLES_STEAM_API_KEY: ${SCPBATTLES_STEAM_API_KEY}
+      SCPBATTLES_MONGODB_ADDDRESS: mongodb
+      SCPBATTLES_OFFICIAL_SERVER_TOKEN: ${SCPBATTLES_OFFICIAL_SERVER_TOKEN}
   
   mongodb:
     image: mongo:7.0.0-rc8-jammy
     network_mode: "host"
     volumes:
-      - /mnt/enderchest/mongodb:/data/db
+      - ${SCPBATTLES_MONGODB_PATH}:/data/db
     
