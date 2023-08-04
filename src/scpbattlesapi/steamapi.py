@@ -99,7 +99,7 @@ class SteamAPI:
 
         response.raise_for_status()
 
-    def add_item(self, item_def: int, steam_id: int) -> None:
+    def add_item(self, item_defs: List[int], steam_id: int) -> None:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
         }
@@ -107,9 +107,14 @@ class SteamAPI:
         parameters = {
             "key": self.api_key,
             "appid": 2173020,
-            "steamid": steam_id,
-            "itemdefid[0]": item_def
+            "steamid": steam_id
         }
+
+        for index, item_def in enumerate(item_defs):
+
+            parameters.update(
+                {f"itemdefid[{index}]": item_def}
+            )
 
         response = requests.post('http://api.steampowered.com/IInventoryService/AddItem/v1', params=parameters,
                                  headers=headers)

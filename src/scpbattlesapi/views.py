@@ -92,7 +92,7 @@ class Crafting(Resource):
                 response = make_response(f"steam api error trying to consume {item_id}", 424); response.headers["Response-Type"] = "crafting"; return response
         
         try:
-            steam.add_item(result_item_def, steam_id)
+            steam.add_item([result_item_def], steam_id)
         except FailedToAdd:
             response = make_response(f"failed to add {item_id} to inventory", 424); response.headers["Response-Type"] = "crafting"; return response
         except HTTPError:
@@ -152,32 +152,21 @@ class Case(Resource):
 
         awarded_item_def = roll(case_random_number, config.case_probabilites[case["itemdefid"]])
 
-        print(awarded_item_def)
-
         bonus_random_number = random.randint(1, 10001)
 
         awarded_bonus_item_def = roll(bonus_random_number, config.bonus_item_probabilities)
 
-        print(awarded_bonus_item_def)
+        # list of items to add to inventory
+        items_to_add = []
+        items_to_add.append(awarded_item_def)
+        if awarded_bonus_item_def: items_to_add.append(awarded_bonus_item_def)
 
-        # add main item
         try:
-            steam.add_item(awarded_item_def, steam_id)
+            steam.add_item(items_to_add, steam_id)
         except FailedToAdd:
-            response = make_response(f"failed to confirm add item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
+            response = make_response(f"failed to confirm add items", 424); response.headers["Response-Type"] = "open_case"; return response
         except HTTPError:
-            response = make_response(f"steam api error trying to add item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
-        
-        # add bonus item
-
-        # only add bonus item def if they got it
-        if awarded_bonus_item_def:
-            try:
-                steam.add_item(awarded_bonus_item_def, steam_id)
-            except FailedToAdd:
-                response = make_response(f"failed to confirm add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
-            except HTTPError:
-                response = make_response(f"steam api error trying to add bonus item {awarded_item_def}", 424); response.headers["Response-Type"] = "open_case"; return response
+            response = make_response(f"steam api error trying to add items", 424); response.headers["Response-Type"] = "open_case"; return response
         
         response = make_response(
             jsonify(
@@ -364,7 +353,7 @@ class ItemGiftCard(Resource):
         if card["used"]:
             response = make_response("code has already been used", 400); response.headers.set("Reponse-Type", "item-gift-card"); return response
         
-        steam.add_item(card["itemdef"], steam_id)
+        steam.add_item([card["itemdef"]], steam_id)
 
         db.itemgiftcards.find_one_and_update(
             {"code": code},
