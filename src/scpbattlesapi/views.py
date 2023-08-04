@@ -172,6 +172,7 @@ class Case(Resource):
             jsonify(
                 {
                     "awarded_item": awarded_item_def,
+                    "awarded_bonus_item": awarded_bonus_item_def,
                     "random_number": case_random_number
                 }
             )
