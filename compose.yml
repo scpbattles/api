@@ -1,6 +1,7 @@
 services:
   api:
     build: .
+    restart: always
     network_mode: "host"
     environment:
       SCPBATTLES_STEAM_API_KEY: ${SCPBATTLES_STEAM_API_KEY}
@@ -9,6 +10,7 @@ services:
   
   mongodb:
     image: mongo:7.0.0-rc8-jammy
+    restart: always
     network_mode: "host"
     volumes:
       - ${SCPBATTLES_MONGODB_PATH}:/data/db
