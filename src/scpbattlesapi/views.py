@@ -302,7 +302,8 @@ class UserInfo(Resource):
             print(config.default_items)
             # give default items
             steam.add_item(
-                config.default_items
+                config.default_items,
+                steamid
             )
 
         response = make_response(
