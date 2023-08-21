@@ -299,6 +299,7 @@ class UserInfo(Resource):
                 user
             )
 
+            print(config.default_items)
             # give default items
             steam.add_item(
                 config.default_items
