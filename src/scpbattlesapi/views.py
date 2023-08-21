@@ -299,6 +299,11 @@ class UserInfo(Resource):
                 user
             )
 
+            # give default items
+            steam.add_item(
+                config.default_items
+            )
+
         response = make_response(
             {
                 "banned": user["is_banned"],
