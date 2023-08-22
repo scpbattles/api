@@ -92,7 +92,7 @@ class Crafting(Resource):
                 response = make_response(f"steam api error trying to consume {item_id}", 424); response.headers["Response-Type"] = "crafting"; return response
         
         try:
-            steam.add_item([result_item_def], steam_id)
+            steam.add_items([result_item_def], steam_id)
         except FailedToAdd:
             response = make_response(f"failed to add {item_id} to inventory", 424); response.headers["Response-Type"] = "crafting"; return response
         except HTTPError:
@@ -162,7 +162,7 @@ class Case(Resource):
         if awarded_bonus_item_def: items_to_add.append(awarded_bonus_item_def)
 
         try:
-            steam.add_item(items_to_add, steam_id)
+            steam.add_items(items_to_add, steam_id)
         except FailedToAdd:
             response = make_response(f"failed to confirm add items", 424); response.headers["Response-Type"] = "open_case"; return response
         except HTTPError:
@@ -280,12 +280,16 @@ class UserInfo(Resource):
 
     def get(self, steamid):
 
+        new_user = False
+
         user = db.users.find_one(
             {"steam_id": steamid}
         )
 
         # new user
         if user == None:
+
+            new_user = True
 
             user = {
                 "steam_id": steamid,
@@ -299,12 +303,14 @@ class UserInfo(Resource):
                 user
             )
 
-            print(config.default_items)
-            # give default items
-            steam.add_item(
-                config.default_items,
-                steamid
-            )
+        # give user any default items they dont have
+        inventory = set(steam.get_inventory(steamid))
+
+        needed_items = list(set(config.default_items) - set(inventory))
+
+        print(needed_items)
+
+        steam.add_items(needed_items, steamid)
 
         response = make_response(
             {
@@ -312,7 +318,9 @@ class UserInfo(Resource):
                 "creation_date": user["creation_date"],
                 "elo": user["elo"],
                 "exp": user["exp"],
-                "user_id": str(user["steam_id"])
+                "user_id": str(user["steam_id"]),
+                "new_user": new_user,
+                "new_items": needed_items
             },
             200
         )
@@ -323,7 +331,7 @@ class UserInfo(Resource):
 
     # Update user info, only official servers can do this
     def put(self, user_id):
-
+        
         pass
 
 class Wallpaper(Resource):
@@ -361,7 +369,7 @@ class ItemGiftCard(Resource):
         if card["used"]:
             response = make_response("code has already been used", 400); response.headers.set("Reponse-Type", "item-gift-card"); return response
         
-        steam.add_item([card["itemdef"]], steam_id)
+        steam.add_items([card["itemdef"]], steam_id)
 
         db.itemgiftcards.find_one_and_update(
             {"code": code},
