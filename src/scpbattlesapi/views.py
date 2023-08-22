@@ -303,14 +303,14 @@ class UserInfo(Resource):
                 user
             )
 
-        # give user any default items they dont have
-        inventory = set(steam.get_inventory(steamid))
+        # # give user any default items they dont have
+        # inventory = set(steam.get_inventory(steamid))
 
-        needed_items = list(set(config.default_items) - set(inventory))
+        # needed_items = list(set(config.default_items) - set(inventory))
 
-        print(needed_items)
+        # print(needed_items)
 
-        steam.add_items(needed_items, steamid)
+        # steam.add_items(needed_items, steamid)
 
         response = make_response(
             {
@@ -319,8 +319,8 @@ class UserInfo(Resource):
                 "elo": user["elo"],
                 "exp": user["exp"],
                 "user_id": str(user["steam_id"]),
-                "new_user": new_user,
-                "new_items": needed_items
+                "new_user": new_user
+                #"new_items": needed_items
             },
             200
         )
