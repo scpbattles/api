@@ -99,7 +99,7 @@ class SteamAPI:
 
         response.raise_for_status()
 
-    def add_item(self, item_defs: List[int], steam_id: int) -> None:
+    def add_items(self, item_defs: List[int], steam_id: int) -> None:
         headers = {
             "Content-Type": "application/x-www-form-urlencoded"
         }
