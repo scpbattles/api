@@ -12,4 +12,4 @@ NOAH = 76561198425783189
 LILY = 76561198846629634
 
 for i in range(0,20):
-    steam.add_item(52, CAIDEN_JONES)
+    steam.add_items(52, CAIDEN_JONES)
