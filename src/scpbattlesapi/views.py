@@ -2,6 +2,7 @@ import time
 import os
 import random
 from typing import List, Dict
+import logging
 
 import flask
 from flask import make_response, request, jsonify
@@ -12,6 +13,8 @@ from requests import HTTPError
 from scpbattlesapi import database
 from scpbattlesapi.steamapi import SteamAPI, FailedToConsume, FailedToAdd, Item
 from scpbattlesapi.config import ConfigHandler
+
+logging.basicConfig(level=logging.DEBUG)
 
 db = MongoClient(os.environ.get("SCPBATTLES_MONGODB_ADDRESS")).scpbattles
 config = ConfigHandler("/etc/scpbattlesapi/config.yaml", "/etc/scpbattlesapi/bad_words.json")
@@ -276,6 +279,28 @@ class Server(Resource):
 
         response = make_response("success", 200); response.headers.set("Reponse-Type", "update_server"); return response
 
+class DefaultItems(Resource):
+
+    def post(self, steamid):
+        inventory = steam.get_inventory(steamid)
+
+        # extract only owned item defs
+        inventory_item_defs: List[int] = []
+
+        for item in inventory:
+            inventory_item_defs.append(item["itemdefid"])
+
+        needed_items = []
+
+        for default_item in config.default_items:
+            if default_item not in inventory_item_defs:
+                needed_items.append(default_item)
+
+        steam.add_items(needed_items, steamid)
+
+        response = make_response(needed_items); response.headers.set("Reponse-Type", "default_items"); return response
+
+
 class UserInfo(Resource):
 
     def get(self, steamid):
@@ -303,15 +328,6 @@ class UserInfo(Resource):
                 user
             )
 
-        # # give user any default items they dont have
-        # inventory = set(steam.get_inventory(steamid))
-
-        # needed_items = list(set(config.default_items) - set(inventory))
-
-        # print(needed_items)
-
-        # steam.add_items(needed_items, steamid)
-
         response = make_response(
             {
                 "banned": user["is_banned"],
@@ -320,7 +336,6 @@ class UserInfo(Resource):
                 "exp": user["exp"],
                 "user_id": str(user["steam_id"]),
                 "new_user": new_user
-                #"new_items": needed_items
             },
             200
         )
