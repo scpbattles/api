@@ -1,4 +1,11 @@
 services:
+  mongodb:
+    image: mongo:7.0.0-rc8-jammy
+    restart: always
+    network_mode: "host"
+    volumes:
+      - mongodb-data:/data/db
+  
   api:
     build: .
     restart: always
@@ -7,11 +14,10 @@ services:
       SCPBATTLES_STEAM_API_KEY: ${SCPBATTLES_STEAM_API_KEY}
       SCPBATTLES_MONGODB_ADDDRESS: mongodb
       SCPBATTLES_OFFICIAL_SERVER_TOKEN: ${SCPBATTLES_OFFICIAL_SERVER_TOKEN}
-  
-  mongodb:
-    image: mongo:7.0.0-rc8-jammy
-    restart: always
-    network_mode: "host"
-    volumes:
-      - ${SCPBATTLES_MONGODB_PATH}:/data/db
+
+    depends_on:
+      - mongodb
+
+volumes:
+  mongodb-data:
     
