@@ -331,7 +331,7 @@ class UserInfo(Resource):
 
     # Update user info, only official servers can do this
     def put(self, user_id):
-        
+
         pass
 
 class Wallpaper(Resource):

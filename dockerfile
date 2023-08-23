@@ -20,5 +20,14 @@ COPY config.yaml /etc/scpbattlesapi
 COPY bad_words.json /etc/scpbattlesapi 
 COPY wallpapers /usr/local/share/scpbattlesapi/wallpapers
 
+# install mongosh
+RUN wget "https://downloads.mongodb.com/compass/mongodb-mongosh_1.10.5_amd64.deb"
+RUN dpkg -i "mongodb-mongosh_1.10.5_amd64.deb"
 
-CMD [ "gunicorn", "-b", "0.0.0.0:5000", "scpbattlesapi.app:app"]
+# copy database init script
+COPY database_init.sh .  
+
+# copy startup script
+COPY docker_startup.sh .
+
+CMD ["/bin/bash", "docker_startup.sh"]
