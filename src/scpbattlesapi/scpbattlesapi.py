@@ -1,113 +1,51 @@
-import time
 import os
+from typing import Dict, List
 import random
-from typing import List, Dict
-import logging
+import time
 
+import docker 
 import flask
-from flask import make_response, request, jsonify
-from flask_restful import Resource
+from flask import request, make_response, jsonify
 from pymongo import MongoClient
 from requests import HTTPError
 
-from scpbattlesapi import database
-from scpbattlesapi.steamapi import SteamAPI, FailedToConsume, FailedToAdd, Item
 from scpbattlesapi.config import ConfigHandler
+from scpbattlesapi.steamapi import SteamAPI, Item, FailedToAdd, FailedToConsume
+from scpbattlesapi import database
 
-logging.basicConfig(level=logging.DEBUG)
+class SCPBattlesAPI:
+    def __init__(self):
+        
+        
+        self.db = MongoClient(os.environ.get("SCPBATTLES_MONGODB_ADDRESS")).scpbattles
+        self.config = ConfigHandler("/etc/scpbattlesapi/config.yaml", "/etc/scpbattlesapi/bad_words.json")
+        self.steam = SteamAPI(os.environ.get("SCPBATTLES_STEAM_API_KEY"))
+        self.docker_client = docker.from_env()
 
-db = MongoClient(os.environ.get("SCPBATTLES_MONGODB_ADDRESS")).scpbattles
-config = ConfigHandler("/etc/scpbattlesapi/config.yaml", "/etc/scpbattlesapi/bad_words.json")
-steam = SteamAPI(os.environ.get("SCPBATTLES_STEAM_API_KEY"))
+        self.server_instances = []
 
-def roll(random_number: int, probabilities: Dict[int, List[int]]) -> int:
+    @staticmethod
+    def roll(random_number: int, probabilities: Dict[int, List[int]]) -> int:
+        for random_number_height, possible_results in probabilities.items():
 
-    for random_number_height, possible_results in probabilities.items():
+            if random_number <= random_number_height:
 
-        if random_number <= random_number_height:
+                possible_results = possible_results
 
-            possible_results = possible_results
+                break
 
-            break
+            else:
+                continue
+        
+        if possible_results == []:
+            result = None
 
         else:
-            continue
-    
-    if possible_results == []:
-        result = None
+            result = random.choice(possible_results)
 
-    else:
-        result = random.choice(possible_results)
+        return result
 
-    return result
-
-class Address(Resource):
-
-    def get(self):
-        
-        response = make_response(request.remote_addr, 200)
-        response.headers["Response-Type"] = "get_ip"
-        
-        return response
-
-class Crafting(Resource):
-
-    def post(self):
-
-        material_item_defs = request.args.getlist("material", type=int)
-        steam_id = request.args.get("steam_id", type=int)
-
-        if len(material_item_defs) == 0: response = make_response("missing or invalid materials", 400); response.headers["Response-Type"] = "crafting"; return response
-        
-        if steam_id == None: response = make_response("missing or invalid steam_id query parameter", 400); response.headers["Response-Type"] = "crafting"; return response
-
-        result_item_def = None
-
-        # find the matching result_item_id for given crafting materials
-        for possible_result_item_def, required_material_item_defs in config.crafting_recipes.items(): 
-            if set(material_item_defs) == set(required_material_item_defs):
-                result_item_def = possible_result_item_def
-            
-        if result_item_def == None: response = make_response("no result item from given materials", 404); response.headers["Response-Type"] = "crafting"; return response
-
-        user = db.users.find_one(
-            {"steam_id": steam_id}
-        )
-        
-        if not user: response = make_response(f"no user in database with steam_id {steam_id}", 404); response.headers["Response-Type"] = "crafting"; return response
-
-        items_to_be_consumed = []
-
-        for material_item_def in material_item_defs:
-            matching_items = steam.query_inventory(steam_id, {"itemdefid": material_item_def})
-
-            if len(matching_items) < 1: response = make_response(f"user does not have item {material_item_def}", 404); response.headers["Response-Type"] = "crafting"; return response
-            
-            items_to_be_consumed.append(matching_items[0]["itemid"])
-        
-        for item_id in items_to_be_consumed:
-
-            try:
-                steam.consume_item(item_id, steam_id)
-            except FailedToConsume:
-                response = make_response(f"failed to confirm consumption of {item_id}", 424); response.headers["Response-Type"] = "crafting"; return response
-            except HTTPError:
-                response = make_response(f"steam api error trying to consume {item_id}", 424); response.headers["Response-Type"] = "crafting"; return response
-        
-        try:
-            steam.add_items([result_item_def], steam_id)
-        except FailedToAdd:
-            response = make_response(f"failed to add {item_id} to inventory", 424); response.headers["Response-Type"] = "crafting"; return response
-        except HTTPError:
-            response = make_response(f"steam api error trying to add {item_id} to inventory", 424); response.headers["Response-Type"] = "crafting"; return response
-
-        response = make_response(str(result_item_def), 201); response.headers["Response-Type"] = "crafting"; return response
-
-
-class Case(Resource):
-
-    def post(self):
-
+    def unbox(self):
         steam_id = request.args.get("steam_id", type=int)
         key_item_id = request.args.get("key_item_id", type=int)
         case_item_id = request.args.get("case_item_id", type=int)
@@ -116,36 +54,36 @@ class Case(Resource):
         if not key_item_id: return make_response("missing key_item_id query parameter", 400).headers.set("Reponse-Type", "open_case")
         if not case_item_id: return make_response("missing case_item_id query parameter", 400).headers.set("Reponse-Type", "open_case")
         
-        user = db.users.find_one({"steam_id": steam_id})
+        user = self.db.users.find_one({"steam_id": steam_id})
 
         if not user: return make_response(f"user {steam_id} not in database")
 
-        inventory = steam.get_inventory(steam_id)
+        inventory = self.steam.get_inventory(steam_id)
 
-        if len(steam.query_inventory(steam_id, {"itemid": case_item_id}, inventory=inventory)) < 1: 
+        if len(self.steam.query_inventory(steam_id, {"itemid": case_item_id}, inventory=inventory)) < 1: 
             response = make_response("case not in inventory", 404); response.headers["Response-Type"] = "open_case"; return response
 
-        if len(steam.query_inventory(steam_id, {"itemid": key_item_id}, inventory=inventory)) < 1:
+        if len(self.steam.query_inventory(steam_id, {"itemid": key_item_id}, inventory=inventory)) < 1:
             response = make_response("key not in inventory", 404); response.headers["Response-Type"] = "open_case"; return response
         
-        case: Item = steam.query_inventory(steam_id, {"itemid": case_item_id}, inventory=inventory)[0]
-        key: Item = steam.query_inventory(steam_id, {"itemid": key_item_id}, inventory=inventory)[0]
+        case: Item = self.steam.query_inventory(steam_id, {"itemid": case_item_id}, inventory=inventory)[0]
+        key: Item = self.steam.query_inventory(steam_id, {"itemid": key_item_id}, inventory=inventory)[0]
 
-        if case["itemdefid"] not in config.case_key_map.keys():
+        if case["itemdefid"] not in self.config.case_key_map.keys():
             response = make_response("specified case is not a case", 404); response.headers["Response-Type"] = "open_case"; return response
 
-        if key["itemdefid"] not in config.case_key_map[case["itemdefid"]]:
+        if key["itemdefid"] not in self.config.case_key_map[case["itemdefid"]]:
             response = make_response(f"specified key {key['itemdefid']} is not valid for case {case['itemdefid']}", 404); response.headers["Response-Type"] = "open_case"; return response
 
         try:
-            steam.consume_item(case["itemid"], steam_id)
+            self.steam.consume_item(case["itemid"], steam_id)
         except FailedToConsume:
             response = make_response(f"failed to consume case {case_item_id}", 424); response.headers["Response-Type"] = "open_case"; return response
         except HTTPError:
             response = make_response(f"steam api error trying to consume case {case_item_id}", 424); response.headers["Response-Type"] = "open_case"; return response
         
         try:
-            steam.consume_item(key["itemid"], steam_id)
+            self.steam.consume_item(key["itemid"], steam_id)
         except FailedToConsume:
             response = make_response(f"failed to consume key {key_item_id}", 424); response.headers["Response-Type"] = "open_case"; return response
         except HTTPError:
@@ -153,11 +91,11 @@ class Case(Resource):
         
         case_random_number = random.randint(1, 10001)
 
-        awarded_item_def = roll(case_random_number, config.case_probabilites[case["itemdefid"]])
+        awarded_item_def = self.roll(case_random_number, self.config.case_probabilites[case["itemdefid"]])
 
         bonus_random_number = random.randint(1, 10001)
 
-        awarded_bonus_item_def = roll(bonus_random_number, config.bonus_item_probabilities)
+        awarded_bonus_item_def = self.roll(bonus_random_number, self.config.bonus_item_probabilities)
 
         # list of items to add to inventory
         items_to_add = []
@@ -165,7 +103,7 @@ class Case(Resource):
         if awarded_bonus_item_def: items_to_add.append(awarded_bonus_item_def)
 
         try:
-            steam.add_items(items_to_add, steam_id)
+            self.steam.add_items(items_to_add, steam_id)
         except FailedToAdd:
             response = make_response(f"failed to confirm add items", 424); response.headers["Response-Type"] = "open_case"; return response
         except HTTPError:
@@ -184,23 +122,66 @@ class Case(Resource):
         response.headers["Response-Type"] = "open_case"
 
         return response
-
-class RegisterServer(Resource):
-    # this needs to be finished!
-    def put(self, server_id):
-        pass
-
-
-    def delete(self, server_id):
-        
-        # this needs to be finished
-        pass
     
-class ServerList(Resource):
+    def craft(self):
+        material_item_defs = request.args.getlist("material", type=int)
+        steam_id = request.args.get("steam_id", type=int)
 
-    def get(self):
+        if len(material_item_defs) == 0: response = make_response("missing or invalid materials", 400); response.headers["Response-Type"] = "crafting"; return response
         
-        online_servers: List[database.Server] = db.servers.find(
+        if steam_id == None: response = make_response("missing or invalid steam_id query parameter", 400); response.headers["Response-Type"] = "crafting"; return response
+
+        result_item_def = None
+
+        # find the matching result_item_id for given crafting materials
+        for possible_result_item_def, required_material_item_defs in self.config.crafting_recipes.items(): 
+            if set(material_item_defs) == set(required_material_item_defs):
+                result_item_def = possible_result_item_def
+            
+        if result_item_def == None: response = make_response("no result item from given materials", 404); response.headers["Response-Type"] = "crafting"; return response
+
+        user = self.db.users.find_one(
+            {"steam_id": steam_id}
+        )
+        
+        if not user: response = make_response(f"no user in database with steam_id {steam_id}", 404); response.headers["Response-Type"] = "crafting"; return response
+
+        items_to_be_consumed = []
+
+        for material_item_def in material_item_defs:
+            matching_items = self.steam.query_inventory(steam_id, {"itemdefid": material_item_def})
+
+            if len(matching_items) < 1: response = make_response(f"user does not have item {material_item_def}", 404); response.headers["Response-Type"] = "crafting"; return response
+            
+            items_to_be_consumed.append(matching_items[0]["itemid"])
+        
+        for item_id in items_to_be_consumed:
+
+            try:
+                self.steam.consume_item(item_id, steam_id)
+            except FailedToConsume:
+                response = make_response(f"failed to confirm consumption of {item_id}", 424); response.headers["Response-Type"] = "crafting"; return response
+            except HTTPError:
+                response = make_response(f"steam api error trying to consume {item_id}", 424); response.headers["Response-Type"] = "crafting"; return response
+        
+        try:
+            self.steam.add_items([result_item_def], steam_id)
+        except FailedToAdd:
+            response = make_response(f"failed to add {item_id} to inventory", 424); response.headers["Response-Type"] = "crafting"; return response
+        except HTTPError:
+            response = make_response(f"steam api error trying to add {item_id} to inventory", 424); response.headers["Response-Type"] = "crafting"; return response
+
+        response = make_response(str(result_item_def), 201); response.headers["Response-Type"] = "crafting"; return response
+
+    def register_sever(self):
+        pass 
+
+    def delete_server(self):
+        pass 
+
+    def get_online_servers(self):
+
+        online_servers: List[database.Server] = self.db.servers.find(
             # find any server that has pinged in the last 10 seconds
             {"last_pinged" : {"$gte": time.time() - 10}}
         )
@@ -231,10 +212,8 @@ class ServerList(Resource):
         response.headers["Response-Type"] = "get_server_list"
 
         return response
-  
-class Server(Resource):
-
-    def put(self, server_id: str):
+    
+    def update_server_listing(self, server_id: str):
 
         auth_token = request.args.get("auth_token", type=str)
         official_server_token = request.args.get("official_auth_token", type=str)
@@ -245,10 +224,8 @@ class Server(Resource):
         current_players = request.args.get("current_players", type=int)
         max_players = request.args.get("max_players", type=int)
         version = request.args.get("version", type=str)
-        
-
     
-        server: database.Server = db.servers.find_one(
+        server: database.Server = self.db.servers.find_one(
             {"id": server_id}
         )
 
@@ -272,17 +249,16 @@ class Server(Resource):
 
         server["last_pinged"] = time.time()
 
-        db.servers.find_one_and_replace(
+        self.db.servers.find_one_and_replace(
             {"id": server_id},
             server
         )
 
         response = make_response("success", 200); response.headers.set("Reponse-Type", "update_server"); return response
 
-class DefaultItems(Resource):
+    def give_default_items(self, steamid: int):
 
-    def post(self, steamid):
-        inventory = steam.get_inventory(steamid)
+        inventory = self.steam.get_inventory(steamid)
 
         # extract only owned item defs
         inventory_item_defs: List[int] = []
@@ -292,22 +268,18 @@ class DefaultItems(Resource):
 
         needed_items = []
 
-        for default_item in config.default_items:
+        for default_item in self.config.default_items:
             if default_item not in inventory_item_defs:
                 needed_items.append(default_item)
 
-        steam.add_items(needed_items, steamid)
+        self.steam.add_items(needed_items, steamid)
 
         response = make_response(needed_items); response.headers.set("Reponse-Type", "default_items"); return response
 
-
-class UserInfo(Resource):
-
-    def get(self, steamid):
-
+    def get_user_info(self, steamid: int):
         new_user = False
 
-        user = db.users.find_one(
+        user = self.db.users.find_one(
             {"steam_id": steamid}
         )
 
@@ -324,7 +296,7 @@ class UserInfo(Resource):
                 "exp": 0
             }
 
-            db.users.insert_one(
+            self.db.users.insert_one(
                 user
             )
 
@@ -343,15 +315,11 @@ class UserInfo(Resource):
         response.headers["Response-Type"] = "get_user_info"
 
         return response
-
-    # Update user info, only official servers can do this
-    def put(self, user_id):
-
+    
+    def update_user_info(self, steamid: int):
         pass
 
-class Wallpaper(Resource):
-    def get(self):
-
+    def get_wallpaper(self):
         wallpapers = os.listdir("/usr/local/share/scpbattlesapi/wallpapers")
 
         wallpaper_choice = random.choice(wallpapers)
@@ -362,16 +330,14 @@ class Wallpaper(Resource):
 
         return response
 
-class ItemGiftCard(Resource):
-    def get(self, code: str): 
-        
+    def redeem_gift_card(self, code: str):
         steam_id = request.args.get("steam_id", type=int)
 
-        card = db.itemgiftcards.find_one(
+        card = self.db.itemgiftcards.find_one(
             {"code": code}
         )
         
-        user = db.users.find_one(
+        user = self.db.users.find_one(
             {"steam_id": steam_id}
         )
 
@@ -384,17 +350,12 @@ class ItemGiftCard(Resource):
         if card["used"]:
             response = make_response("code has already been used", 400); response.headers.set("Reponse-Type", "item-gift-card"); return response
         
-        steam.add_items([card["itemdef"]], steam_id)
+        self.steam.add_items([card["itemdef"]], steam_id)
 
-        db.itemgiftcards.find_one_and_update(
+        self.db.itemgiftcards.find_one_and_update(
             {"code": code},
             {"$set": {"used": True}}
         )
 
         response = make_response(str(card["itemdef"]), 201); response.headers.set("Reponse-Type", "item-gift-card"); return response
-        
-
-        
-        
-        
         
