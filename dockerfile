@@ -6,6 +6,7 @@ WORKDIR /usr/src/app
 COPY ./src/scpbattlesapi/requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
+RUN pip install docker
 
 # make module folder
 RUN mkdir scpbattlesapi

@@ -20,7 +20,7 @@ class SCPBattlesAPI:
         self.db = MongoClient(os.environ.get("SCPBATTLES_MONGODB_ADDRESS")).scpbattles
         self.config = ConfigHandler("/etc/scpbattlesapi/config.yaml", "/etc/scpbattlesapi/bad_words.json")
         self.steam = SteamAPI(os.environ.get("SCPBATTLES_STEAM_API_KEY"))
-        self.docker_client = docker.from_env()
+        #self.docker_client = docker.from_env()
 
         self.server_instances = []
 
