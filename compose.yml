@@ -20,4 +20,5 @@ services:
 
 volumes:
   mongodb-data:
+    name: "scpbattles-mongodb"
     
